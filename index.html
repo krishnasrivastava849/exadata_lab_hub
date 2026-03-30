@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCI Provisioning Lab Architecture v2 — Designed by Krishna</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   THEME SYSTEM — Dark (default) + Light
+   ═══════════════════════════════════════════════════════════ */
+:root, [data-theme="dark"] {
+  --bg-primary: #0c0f1a;
+  --bg-secondary: #131729;
+  --bg-card: #1a1f36;
+  --bg-card-hover: #1f2544;
+  --bg-elevated: #222847;
+  --border: #2a3158;
+  --border-hover: #3d4575;
+  --text-primary: #e8ecf4;
+  --text-secondary: #9ba3bf;
+  --text-muted: #5c6484;
+  --text-white: #ffffff;
+  --oracle-red: #c74634;
+  --oracle-red-hover: #e05a48;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --accent-orange: #f59e0b;
+  --accent-pink: #ec4899;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info-bg: rgba(59,130,246,0.08);
+  --info-border: rgba(59,130,246,0.25);
+  --warn-bg: rgba(245,158,11,0.08);
+  --warn-border: rgba(245,158,11,0.25);
+  --danger-bg: rgba(199,70,52,0.08);
+  --danger-border: rgba(199,70,52,0.25);
+  --grid-dot: rgba(255,255,255,0.03);
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --code-bg: #0d1117;
+  --topnav-bg: linear-gradient(135deg, #1a0a2e 0%, #0c0f1a 100%);
+}
+[data-theme="light"] {
+  --bg-primary: #f4f6fb;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8f9fc;
+  --bg-elevated: #f0f2f8;
+  --border: #d4d9e8;
+  --border-hover: #b0b8d0;
+  --text-primary: #1a1f36;
+  --text-secondary: #5c6484;
+  --text-muted: #9ba3bf;
+  --text-white: #1a1f36;
+  --info-bg: rgba(59,130,246,0.06);
+  --info-border: rgba(59,130,246,0.2);
+  --warn-bg: rgba(245,158,11,0.06);
+  --warn-border: rgba(245,158,11,0.2);
+  --danger-bg: rgba(199,70,52,0.06);
+  --danger-border: rgba(199,70,52,0.2);
+  --grid-dot: rgba(0,0,0,0.04);
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --code-bg: #f0f2f8;
+  --topnav-bg: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ═══ TOP NAV ═══ */
+.topnav {
+  background: var(--topnav-bg);
+  border-bottom: 3px solid var(--oracle-red);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.topnav .brand { display:flex; align-items:center; gap:14px; }
+.topnav .oracle-logo { color:var(--oracle-red); font-size:20px; font-weight:800; letter-spacing:-0.5px; }
+.topnav .sep { color:rgba(255,255,255,0.2); font-size:18px; }
+.topnav .app-name { color:#e8ecf4; font-size:13px; font-weight:600; }
+.topnav .controls { display:flex; align-items:center; gap:10px; }
+.topnav .region { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); padding:5px 12px; border-radius:6px; font-size:11px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px; }
+.topnav .region .dot { width:7px;height:7px;background:var(--accent-green);border-radius:50%;animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+.theme-toggle, .pdf-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.8);
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.theme-toggle:hover, .pdf-btn:hover { background:rgba(255,255,255,0.15); }
+
+/* ═══ TAB SYSTEM ═══ */
+.tab-container {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 52px;
+  z-index: 150;
+}
+.tab-scroll { display:flex; overflow-x:auto; padding:0 16px; scrollbar-width:none; }
+.tab-scroll::-webkit-scrollbar { display:none; }
+.tab-btn {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover { color:var(--text-primary); }
+.tab-btn.active { color:var(--text-white); border-bottom-color:var(--oracle-red); }
+.tab-btn .ico { font-size:14px; }
+
+/* ═══ MAIN ═══ */
+.main { max-width:1440px; margin:0 auto; padding:24px; }
+.panel { display:none; animation:fadeUp 0.3s ease; }
+.panel.active { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+/* ═══ SECTION HEADERS ═══ */
+.sec-hdr { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.sec-hdr h2 { font-size:20px; font-weight:800; color:var(--text-white); }
+.badge { background:var(--oracle-red); color:white; font-size:9px; font-weight:800; padding:3px 10px; border-radius:4px; text-transform:uppercase; letter-spacing:1.2px; }
+.badge-blue { background:var(--accent-blue); }
+.badge-green { background:var(--accent-green); }
+.badge-purple { background:var(--accent-purple); }
+
+/* ═══ CARDS ═══ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: all 0.2s;
+}
+.card:hover { border-color:var(--border-hover); }
+.card-title { font-size:14px; font-weight:700; color:var(--text-white); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.card-title .ico { font-size:18px; }
+
+/* ═══ INFO BOXES ═══ */
+.info { background:var(--info-bg); border:1px solid var(--info-border); border-left:4px solid var(--accent-blue); border-radius:0 8px 8px 0; padding:14px 18px; margin:16px 0; font-size:13px; line-height:1.6; }
+.info.warn { background:var(--warn-bg); border-color:var(--warn-border); border-left-color:var(--accent-orange); }
+.info.danger { background:var(--danger-bg); border-color:var(--danger-border); border-left-color:var(--oracle-red); }
+.info strong { color:var(--text-white); }
+
+/* ═══ COMPARTMENT TREE ═══ */
+.tree { padding:8px 0; }
+.tree-node { position:relative; padding-left:28px; margin:4px 0; }
+.tree-node::before { content:''; position:absolute; left:8px; top:0; bottom:50%; width:1px; border-left:2px dashed var(--border); }
+.tree-node::after { content:''; position:absolute; left:8px; top:50%; width:16px; border-top:2px dashed var(--border); }
+.tree-node:first-child::before { top:50%; }
+.tree-root { padding-left:0; }
+.tree-root::before,.tree-root::after { display:none; }
+.tree-label { display:inline-flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:6px; padding:7px 13px; font-size:12px; font-weight:600; cursor:default; transition:all 0.2s; }
+.tree-label:hover { border-color:var(--accent-blue); background:rgba(59,130,246,0.06); }
+.comp-icon { width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;flex-shrink:0; }
+.tree-children { padding-left:8px; }
+
+/* ═══ FLOW STEPS ═══ */
+.flow { display:flex; flex-direction:column; gap:2px; margin-top:16px; }
+.fstep { display:flex; align-items:flex-start; gap:14px; }
+.fstep-line { display:flex; flex-direction:column; align-items:center; width:36px; flex-shrink:0; }
+.fstep-num { width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;z-index:2;color:white; }
+.fstep-conn { width:2px;height:20px;background:var(--border);flex-shrink:0; }
+.fstep:last-child .fstep-conn { display:none; }
+.fstep-body { background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px; padding:14px 18px; flex:1; margin-bottom:4px; transition:all 0.2s; }
+.fstep-body:hover { border-color:rgba(199,70,52,0.4); transform:translateX(3px); }
+.fstep-body h4 { font-size:13px; font-weight:700; color:var(--text-white); margin-bottom:5px; }
+.fstep-body p { font-size:12px; color:var(--text-secondary); line-height:1.6; }
+.console-path { font-family:'Source Code Pro',monospace; font-size:10px; color:var(--accent-cyan); background:rgba(6,182,212,0.06); padding:4px 10px; border-radius:4px; margin-top:8px; display:inline-block; }
+.fstep-time { font-size:10px; color:var(--accent-orange); font-weight:700; margin-top:6px; display:flex; align-items:center; gap:4px; }
+
+/* ═══ TABLES ═══ */
+.tbl { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; margin-top:12px; }
+.tbl thead th { background:var(--bg-elevated); color:var(--text-secondary); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; padding:10px 12px; text-align:left; border-bottom:2px solid var(--border); }
+.tbl thead th:first-child { border-radius:8px 0 0 0; }
+.tbl thead th:last-child { border-radius:0 8px 0 0; }
+.tbl tbody td { padding:10px 12px; border-bottom:1px solid rgba(42,49,88,0.4); }
+.tbl tbody tr:hover { background:rgba(59,130,246,0.04); }
+.mono { font-family:'Source Code Pro',monospace; }
+.cidr-val { font-family:'Source Code Pro',monospace; font-weight:600; color:var(--accent-cyan); }
+.type-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; }
+.type-priv { background:rgba(16,185,129,0.12); color:var(--accent-green); }
+.type-pub { background:rgba(245,158,11,0.12); color:var(--accent-orange); }
+
+/* ═══ CIDR CALCULATOR ═══ */
+.input-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:10px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.8px; }
+.field input, .field select {
+  background:var(--bg-elevated); border:1px solid var(--border); color:var(--text-primary);
+  padding:9px 13px; border-radius:6px; font-family:'Source Code Pro',monospace; font-size:13px;
+  outline:none; transition:border-color 0.2s; min-width:180px;
+}
+.field input:focus,.field select:focus { border-color:var(--oracle-red); box-shadow:0 0 0 3px rgba(199,70,52,0.12); }
+.btn { padding:9px 20px; border-radius:6px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; border:none; transition:all 0.2s; }
+.btn-red { background:var(--oracle-red); color:white; }
+.btn-red:hover { background:var(--oracle-red-hover); transform:translateY(-1px); }
+.btn-sm { padding:5px 12px; font-size:11px; border-radius:4px; }
+
+/* ═══ INTERACTIVE ARCHITECTURE DIAGRAM ═══ */
+.arch-canvas {
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(15,52,96,0.15) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.arch-canvas::before {
+  content:''; position:absolute; top:0;left:0;right:0;bottom:0;
+  background-image:radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+  background-size:20px 20px; pointer-events:none;
+}
+.arch-region { position:relative; z-index:1; }
+.arch-region-label { text-align:center; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:16px; }
+.arch-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+.arch-box {
+  border:2px solid; border-radius:8px; padding:14px 18px; min-width:170px; text-align:center;
+  cursor:pointer; transition:all 0.25s; position:relative;
+}
+.arch-box:hover { transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,0.3); }
+.arch-box.selected { box-shadow:0 0 0 3px rgba(199,70,52,0.4); transform:translateY(-3px); }
+.arch-box .a-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px; }
+.arch-box .a-detail { font-family:'Source Code Pro',monospace; font-size:11px; opacity:0.7; }
+.arch-box .a-sub { font-size:10px; color:var(--text-muted); margin-top:4px; }
+.a-vcn { border-color:var(--accent-blue); background:rgba(59,130,246,0.04); }
+.a-vcn .a-title { color:var(--accent-blue); }
+.a-client { border-color:var(--accent-green); background:rgba(16,185,129,0.04); }
+.a-client .a-title { color:var(--accent-green); }
+.a-backup { border-color:var(--accent-orange); background:rgba(245,158,11,0.04); }
+.a-backup .a-title { color:var(--accent-orange); }
+.a-gw { border-color:var(--accent-cyan); background:rgba(6,182,212,0.04); }
+.a-gw .a-title { color:var(--accent-cyan); }
+.a-exa { border-color:var(--oracle-red); background:rgba(199,70,52,0.04); }
+.a-exa .a-title { color:var(--oracle-red); }
+.a-db { border-color:var(--accent-purple); background:rgba(139,92,246,0.04); }
+.a-db .a-title { color:var(--accent-purple); }
+.arch-arrow { text-align:center; color:var(--text-muted); font-size:18px; margin:6px 0; }
+.arch-detail-panel {
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
+  padding:16px 20px; margin-top:16px; display:none; animation:fadeUp 0.2s ease;
+}
+.arch-detail-panel.show { display:block; }
+.arch-detail-panel h4 { font-size:14px; font-weight:700; color:var(--text-white); margin-bottom:10px; }
+.detail-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; }
+.detail-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(42,49,88,0.3); font-size:12px; }
+.detail-item .dk { color:var(--text-secondary); }
+.detail-item .dv { color:var(--text-primary); font-weight:600; font-family:'Source Code Pro',monospace; font-size:11px; }
+
+/* ═══ CHECKLIST ═══ */
+.checklist { margin-top:12px; }
+.check-item {
+  display:flex; align-items:flex-start; gap:12px; padding:12px 16px;
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:8px;
+  margin-bottom:6px; transition:all 0.2s; cursor:pointer;
+}
+.check-item:hover { border-color:var(--border-hover); }
+.check-item.done { opacity:0.6; }
+.check-item.done .check-text { text-decoration:line-through; }
+.check-box {
+  width:22px; height:22px; border:2px solid var(--border); border-radius:5px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:all 0.2s; margin-top:1px;
+}
+.check-item.done .check-box { background:var(--accent-green); border-color:var(--accent-green); }
+.check-item.done .check-box::after { content:'✓'; color:white; font-size:13px; font-weight:800; }
+.check-text h4 { font-size:13px; font-weight:600; color:var(--text-white); }
+.check-text p { font-size:11px; color:var(--text-secondary); margin-top:3px; }
+.progress-bar { background:var(--bg-elevated); border-radius:8px; height:8px; margin:12px 0; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--accent-green),var(--accent-cyan)); border-radius:8px; transition:width 0.4s ease; }
+.progress-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
+
+/* ═══ QUIZ ═══ */
+.quiz-q { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:16px; }
+.quiz-q h4 { font-size:14px; font-weight:700; color:var(--text-white); margin-bottom:14px; display:flex; gap:8px; }
+.quiz-q .q-num { color:var(--oracle-red); font-weight:800; }
+.quiz-opts { display:flex; flex-direction:column; gap:6px; }
+.quiz-opt {
+  display:flex; align-items:center; gap:10px; padding:10px 14px;
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:6px;
+  cursor:pointer; transition:all 0.2s; font-size:13px;
+}
+.quiz-opt:hover { border-color:var(--accent-blue); }
+.quiz-opt.correct { background:rgba(16,185,129,0.1); border-color:var(--accent-green); }
+.quiz-opt.wrong { background:rgba(239,68,68,0.1); border-color:var(--danger); }
+.quiz-opt .opt-marker { width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0; }
+.quiz-opt.correct .opt-marker { background:var(--accent-green);border-color:var(--accent-green);color:white; }
+.quiz-opt.wrong .opt-marker { background:var(--danger);border-color:var(--danger);color:white; }
+.quiz-explanation { margin-top:10px; padding:10px 14px; background:var(--info-bg); border:1px solid var(--info-border); border-radius:6px; font-size:12px; color:var(--text-secondary); display:none; }
+.quiz-score { text-align:center; padding:20px; }
+.quiz-score .score-num { font-size:48px; font-weight:800; color:var(--oracle-red); }
+.quiz-score .score-label { font-size:14px; color:var(--text-secondary); }
+
+/* ═══ NSG BUILDER ═══ */
+.nsg-svc-btns { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.nsg-svc-btn {
+  padding:8px 16px; border-radius:6px; border:1px solid var(--border);
+  background:var(--bg-elevated); color:var(--text-secondary); font-size:12px; font-weight:600;
+  cursor:pointer; transition:all 0.2s; font-family:inherit;
+}
+.nsg-svc-btn:hover { border-color:var(--oracle-red); }
+.nsg-svc-btn.active { background:var(--oracle-red); color:white; border-color:var(--oracle-red); }
+.copy-btn {
+  background:var(--bg-elevated); border:1px solid var(--border); color:var(--accent-cyan);
+  padding:6px 14px; border-radius:5px; cursor:pointer; font-size:11px; font-weight:600;
+  font-family:inherit; transition:all 0.2s;
+}
+.copy-btn:hover { background:var(--accent-cyan); color:white; }
+
+/* ═══ CODE BLOCKS ═══ */
+.code-block {
+  background:var(--code-bg); border:1px solid var(--border); border-radius:8px;
+  padding:16px; font-family:'Source Code Pro',monospace; font-size:12px;
+  line-height:1.8; overflow-x:auto; position:relative; color:var(--text-primary);
+  margin-top:12px;
+}
+.code-block .copy-float {
+  position:absolute; top:8px; right:8px;
+}
+.code-block .kw { color:var(--accent-purple); }
+.code-block .str { color:var(--accent-green); }
+.code-block .cm { color:var(--text-muted); }
+.code-block .var { color:var(--accent-cyan); }
+
+/* ═══ SPEC GRID ═══ */
+.spec-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; margin-top:16px; }
+.spec-card {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+  padding:18px; border-top:3px solid var(--oracle-red); transition:all 0.25s;
+}
+.spec-card:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+.spec-card h3 { font-size:15px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.spec-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(42,49,88,0.25); font-size:12px; }
+.spec-row:last-child { border-bottom:none; }
+.spec-key { color:var(--text-secondary); }
+.spec-val { color:var(--text-primary); font-weight:600; font-family:'Source Code Pro',monospace; font-size:11px; text-align:right; max-width:55%; }
+
+/* ═══ COMPARISON TABLE ═══ */
+.cmp-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; }
+.cmp-table thead th { background:var(--bg-elevated); padding:10px 14px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-secondary); border-bottom:2px solid var(--border); }
+.cmp-table tbody td { padding:10px 14px; border-bottom:1px solid rgba(42,49,88,0.3); vertical-align:top; }
+.cmp-table tbody tr:hover { background:rgba(59,130,246,0.03); }
+.cmp-table .feature { font-weight:600; color:var(--text-white); min-width:140px; }
+.check-yes { color:var(--accent-green); font-weight:700; }
+.check-no { color:var(--danger); font-weight:700; }
+
+/* ═══ TROUBLESHOOT ═══ */
+.trouble-item {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+  margin-bottom:12px; overflow:hidden; transition:all 0.2s;
+}
+.trouble-header {
+  padding:14px 18px; cursor:pointer; display:flex; align-items:center;
+  justify-content:space-between; font-size:13px; font-weight:600;
+}
+.trouble-header:hover { background:var(--bg-card-hover); }
+.trouble-header .error-msg { color:var(--danger); font-family:'Source Code Pro',monospace; font-size:12px; }
+.trouble-body { padding:0 18px 16px; display:none; }
+.trouble-item.open .trouble-body { display:block; }
+.trouble-item.open .trouble-chevron { transform:rotate(180deg); }
+.trouble-chevron { transition:transform 0.2s; color:var(--text-muted); }
+.fix-step { display:flex; gap:8px; margin-top:8px; font-size:12px; color:var(--text-secondary); line-height:1.6; }
+.fix-step .fix-num { background:var(--accent-green); color:white; width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0; }
+
+/* ═══ DATA GUARD DIAGRAM ═══ */
+.dg-topology { display:flex; gap:24px; align-items:center; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+.dg-box { background:var(--bg-elevated); border:2px solid var(--border); border-radius:10px; padding:20px; min-width:240px; text-align:center; }
+.dg-box h4 { font-size:14px; font-weight:700; color:var(--text-white); margin-bottom:8px; }
+.dg-box .dg-role { font-size:11px; font-weight:700; padding:3px 10px; border-radius:4px; display:inline-block; margin-bottom:8px; }
+.dg-primary .dg-role { background:rgba(16,185,129,0.15); color:var(--accent-green); }
+.dg-standby .dg-role { background:rgba(245,158,11,0.15); color:var(--accent-orange); }
+.dg-arrow { font-size:28px; color:var(--accent-cyan); display:flex; flex-direction:column; align-items:center; gap:2px; }
+.dg-arrow .dg-label { font-size:10px; font-weight:600; color:var(--text-muted); }
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px) {
+  .main { padding:16px; }
+  .input-row { flex-direction:column; }
+  .field input,.field select { min-width:100%; }
+  .spec-grid { grid-template-columns:1fr; }
+  .arch-row { flex-direction:column; align-items:center; }
+  .dg-topology { flex-direction:column; }
+  .dg-arrow { transform:rotate(90deg); }
+}
+
+/* ═══ PRINT ═══ */
+@media print {
+  .topnav,.tab-container { display:none; }
+  .panel { display:block!important; page-break-before:always; }
+  .panel:first-child { page-break-before:auto; }
+  body { background:white; color:#1a1a2e; }
+}
+
+.footer { text-align:center; padding:32px 0 16px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); margin-top:40px; }
+.footer a { color:var(--oracle-red); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ TOP NAV ═══════════════ -->
+<nav class="topnav">
+  <div class="brand">
+    <span class="oracle-logo">ORACLE</span>
+    <span class="sep">|</span>
+    <span class="app-name">Cloud Infrastructure — ExaCC/ExaCS Complete Stack Provisioning</span>
+  </div>
+  <div class="controls">
+    <div class="region"><span class="dot"></span>ap-mumbai-1</div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Light/Dark">🌓</button>
+    <button class="pdf-btn" onclick="window.print()" title="Print / Save PDF">📄 PDF</button>
+  </div>
+</nav>
+
+<!-- ═══════════════ TABS ═══════════════ -->
+<div class="tab-container">
+<div class="tab-scroll" id="tabScroll">
+  <button class="tab-btn active" data-tab="compartment"><span class="ico">🏗️</span>Compartments</button>
+  <button class="tab-btn" data-tab="arch"><span class="ico">🗺️</span>Architecture</button>
+  <button class="tab-btn" data-tab="vcn"><span class="ico">🌐</span>VCN & Subnets</button>
+  <button class="tab-btn" data-tab="cidr"><span class="ico">🔢</span>CIDR Calc</button>
+  <button class="tab-btn" data-tab="nsg"><span class="ico">🛡️</span>NSG Builder</button>
+  <button class="tab-btn" data-tab="exacc"><span class="ico">🔴</span>ExaCC</button>
+  <button class="tab-btn" data-tab="exacs"><span class="ico">🟠</span>ExaCS</button>
+  <button class="tab-btn" data-tab="adb"><span class="ico">🟢</span>ADB-D</button>
+  <button class="tab-btn" data-tab="dbcs"><span class="ico">🔵</span>DBCS</button>
+  <button class="tab-btn" data-tab="checklist"><span class="ico">✅</span>Checklist</button>
+  <button class="tab-btn" data-tab="terraform"><span class="ico">⚙️</span>Terraform/CLI</button>
+  <button class="tab-btn" data-tab="dg"><span class="ico">🔄</span>Data Guard</button>
+  <button class="tab-btn" data-tab="onprem"><span class="ico">🏢</span>On-Prem vs Cloud</button>
+  <button class="tab-btn" data-tab="trouble"><span class="ico">🔧</span>Troubleshoot</button>
+  <button class="tab-btn" data-tab="quiz"><span class="ico">🧠</span>Quiz</button>
+  <button class="tab-btn" data-tab="compare"><span class="ico">📊</span>Compare</button>
+</div>
+</div>
+
+<div class="main">
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: COMPARTMENT DESIGN                ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-compartment" class="panel active">
+  <div class="sec-hdr"><h2>Compartment Hierarchy Design</h2><span class="badge">Best Practice</span></div>
+  <div class="info"><strong>Why Compartments Matter:</strong> OCI compartments isolate resources, control IAM policies, and organize billing. For Exadata deployments, a well-structured hierarchy ensures network admins manage VCNs while DB admins manage database resources — each in their own compartment with separate policies.</div>
+  <div class="card">
+    <div class="card-title"><span class="ico">📂</span>Recommended Hierarchy</div>
+    <div class="tree">
+      <div class="tree-node tree-root">
+        <div class="tree-label"><div class="comp-icon" style="background:var(--oracle-red)">T</div>Root Compartment (Tenancy)</div>
+        <div class="tree-children">
+          <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-blue)">N</div>cmp-network</div>
+            <div class="tree-children">
+              <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-blue)">P</div>cmp-network-prod</div></div>
+              <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-blue)">N</div>cmp-network-nonprod</div></div>
+            </div>
+          </div>
+          <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-green)">D</div>cmp-database</div>
+            <div class="tree-children">
+              <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-purple)">X</div>cmp-exacc</div>
+                <div class="tree-children">
+                  <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-purple)">P</div>cmp-exacc-prod</div></div>
+                  <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-purple)">D</div>cmp-exacc-dev</div></div>
+                </div>
+              </div>
+              <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-cyan)">S</div>cmp-exacs</div>
+                <div class="tree-children">
+                  <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-cyan)">P</div>cmp-exacs-prod</div></div>
+                  <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-cyan)">D</div>cmp-exacs-dev</div></div>
+                </div>
+              </div>
+              <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-orange)">A</div>cmp-adb</div></div>
+              <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-blue)">B</div>cmp-dbcs</div></div>
+            </div>
+          </div>
+          <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--accent-pink)">S</div>cmp-security</div></div>
+          <div class="tree-node"><div class="tree-label"><div class="comp-icon" style="background:var(--text-muted)">M</div>cmp-management</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🔒</span>IAM Policy Examples</div>
+    <div class="code-block">
+<span class="kw">Allow group</span> <span class="var">NetworkAdmins</span> <span class="kw">to manage</span> virtual-network-family <span class="kw">in compartment</span> <span class="str">cmp-network</span>
+<span class="kw">Allow group</span> <span class="var">ExaCCAdmins</span> <span class="kw">to manage</span> database-family <span class="kw">in compartment</span> <span class="str">cmp-exacc</span>
+<span class="kw">Allow group</span> <span class="var">ExaCCAdmins</span> <span class="kw">to use</span> virtual-network-family <span class="kw">in compartment</span> <span class="str">cmp-network</span>
+<span class="kw">Allow group</span> <span class="var">ADBAdmins</span> <span class="kw">to manage</span> autonomous-database-family <span class="kw">in compartment</span> <span class="str">cmp-adb</span>
+<span class="kw">Allow group</span> <span class="var">DBCSAdmins</span> <span class="kw">to manage</span> database-family <span class="kw">in compartment</span> <span class="str">cmp-dbcs</span>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: INTERACTIVE ARCHITECTURE           ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-arch" class="panel">
+  <div class="sec-hdr"><h2>Interactive Architecture Diagram</h2><span class="badge badge-blue">Click Components</span></div>
+  <div class="info">Click any component below to see its detailed configuration — IP addresses, ports, connections, and dependencies.</div>
+  <div class="arch-canvas">
+    <div class="arch-region">
+      <div class="arch-region-label">OCI Region — ap-mumbai-1 (BOM)</div>
+      <div class="arch-row">
+        <div class="arch-box a-vcn" style="min-width:92%;padding:18px;" onclick="showArchDetail('vcn',event)">
+          <div class="a-title">VCN — vcn-exadata-lab</div>
+          <div class="a-detail">10.0.0.0/16 | DNS: exalab</div>
+          <div class="arch-row" style="margin-top:16px;">
+            <div class="arch-box a-client" onclick="event.stopPropagation();showArchDetail('client',event)">
+              <div class="a-title">Client Subnet</div>
+              <div class="a-detail">10.0.1.0/24</div>
+              <div class="a-sub">Private | 254 IPs</div>
+            </div>
+            <div class="arch-box a-backup" onclick="event.stopPropagation();showArchDetail('backup',event)">
+              <div class="a-title">Backup Subnet</div>
+              <div class="a-detail">10.0.2.0/24</div>
+              <div class="a-sub">Private | 254 IPs</div>
+            </div>
+            <div class="arch-box a-gw" onclick="event.stopPropagation();showArchDetail('app',event)">
+              <div class="a-title">App Subnet</div>
+              <div class="a-detail">10.0.3.0/24</div>
+              <div class="a-sub">Private | Bastion</div>
+            </div>
+          </div>
+          <div class="arch-arrow">↕</div>
+          <div class="arch-row">
+            <div class="arch-box a-exa" onclick="event.stopPropagation();showArchDetail('exainfra',event)">
+              <div class="a-title">Exa Infrastructure</div>
+              <div class="a-detail">X9M-2</div>
+              <div class="a-sub">2 DB + 3 Storage</div>
+            </div>
+            <div class="arch-box a-db" onclick="event.stopPropagation();showArchDetail('vmcluster',event)">
+              <div class="a-title">VM Cluster</div>
+              <div class="a-detail">4 OCPU/node</div>
+              <div class="a-sub">GI 19.22</div>
+            </div>
+            <div class="arch-box a-db" onclick="event.stopPropagation();showArchDetail('database',event)">
+              <div class="a-title">Database</div>
+              <div class="a-detail">19c EE-HP</div>
+              <div class="a-sub">CDB + PDB1</div>
+            </div>
+          </div>
+          <div class="arch-arrow">↕</div>
+          <div class="arch-row">
+            <div class="arch-box a-gw" style="min-width:130px;" onclick="event.stopPropagation();showArchDetail('sgw',event)">
+              <div class="a-title">Service GW</div><div class="a-detail">All Services</div>
+            </div>
+            <div class="arch-box a-gw" style="min-width:130px;" onclick="event.stopPropagation();showArchDetail('natgw',event)">
+              <div class="a-title">NAT GW</div><div class="a-detail">Outbound</div>
+            </div>
+            <div class="arch-box a-gw" style="min-width:130px;" onclick="event.stopPropagation();showArchDetail('drg',event)">
+              <div class="a-title">DRG</div><div class="a-detail">FastConnect</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arch-detail-panel" id="archDetailPanel">
+    <h4 id="archDetailTitle">Component Details</h4>
+    <div class="detail-grid" id="archDetailGrid"></div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: VCN & SUBNET DESIGN               ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-vcn" class="panel">
+  <div class="sec-hdr"><h2>VCN & Subnet Architecture</h2><span class="badge">Network</span></div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🛡️</span>Required NSG Rules — Exadata Client Subnet</div>
+    <table class="tbl">
+      <thead><tr><th>Direction</th><th>Protocol</th><th>Port</th><th>Source/Dest</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Ingress</td><td>TCP</td><td>1521</td><td class="mono">10.0.3.0/24</td><td>SQL*Net from App Subnet</td></tr>
+        <tr><td>Ingress</td><td>TCP</td><td>1521</td><td class="mono">10.0.1.0/24</td><td>Inter-node RAC</td></tr>
+        <tr><td>Ingress</td><td>TCP</td><td>6200</td><td class="mono">10.0.1.0/24</td><td>ONS (FAN events)</td></tr>
+        <tr><td>Ingress</td><td>TCP</td><td>22</td><td class="mono">10.0.3.0/24</td><td>SSH from Bastion</td></tr>
+        <tr><td>Egress</td><td>TCP</td><td>443</td><td class="mono">OSN CIDR</td><td>Object Storage / Service GW</td></tr>
+        <tr><td>Ingress</td><td>TCP</td><td>2484</td><td class="mono">10.0.3.0/24</td><td>SQL*Net TLS (TCPS)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="info warn"><strong>⚠ ExaCC Specific:</strong> ExaCC requires TWO additional VLANs (admin + client) on the Exadata infrastructure. The admin VLAN connects to Oracle-managed control plane. Min /28 for client, /27+ recommended.</div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: CIDR CALCULATOR                    ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-cidr" class="panel">
+  <div class="sec-hdr"><h2>CIDR Auto-Split Calculator</h2><span class="badge badge-blue">Interactive</span></div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🔢</span>Input VCN CIDR → Auto-generate subnets</div>
+    <div class="input-row">
+      <div class="field"><label>VCN CIDR</label><input type="text" id="vcnCidr" value="10.0.0.0/16"></div>
+      <div class="field"><label>Deployment</label>
+        <select id="deployType">
+          <option value="exacc">ExaCC</option><option value="exacs">ExaCS</option>
+          <option value="adb">ADB-D</option><option value="dbcs">DBCS</option>
+          <option value="all" selected>All Services</option>
+        </select>
+      </div>
+      <div class="field"><label>Subnet Size</label>
+        <select id="subnetSize">
+          <option value="24">/24 (254 hosts)</option><option value="25">/25 (126)</option>
+          <option value="26">/26 (62)</option><option value="27">/27 (30)</option><option value="28">/28 (14)</option>
+        </select>
+      </div>
+      <button class="btn btn-red" onclick="calcCIDR()">⚡ Calculate</button>
+    </div>
+    <div id="cidrOut"></div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: NSG BUILDER                        ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-nsg" class="panel">
+  <div class="sec-hdr"><h2>NSG Rule Builder</h2><span class="badge badge-green">Auto-Generate</span></div>
+  <div class="info">Select a service type below to auto-generate all required NSG ingress/egress rules. Copy as OCI CLI or Terraform format.</div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🛡️</span>Select Service</div>
+    <div class="nsg-svc-btns">
+      <button class="nsg-svc-btn active" onclick="buildNSG('exacc',event)">ExaCC</button>
+      <button class="nsg-svc-btn" onclick="buildNSG('exacs',event)">ExaCS</button>
+      <button class="nsg-svc-btn" onclick="buildNSG('adb',event)">ADB-D</button>
+      <button class="nsg-svc-btn" onclick="buildNSG('dbcs',event)">DBCS</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="copy-btn" onclick="copyNSG('table',event)">📋 Copy as Table</button>
+      <button class="copy-btn" onclick="copyNSG('terraform',event)">⚙️ Copy as Terraform</button>
+      <button class="copy-btn" onclick="copyNSG('cli',event)">💻 Copy as OCI CLI</button>
+    </div>
+    <div id="nsgOut"></div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: ExaCC PROVISIONING                 ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-exacc" class="panel">
+  <div class="sec-hdr"><h2>ExaCC Provisioning Flow</h2><span class="badge">Cloud@Customer</span></div>
+  <div class="info danger"><strong>Key Difference:</strong> ExaCC sits in YOUR data center. Oracle manages hardware, but you own the network. Flow: <strong>Infrastructure → VM Cluster Network → Validate → VM Cluster → DB Home → Database</strong>.</div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🔴</span>Step-by-Step</div>
+    <div class="flow">
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--oracle-red)">1</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Exadata Infrastructure</h4><p>Select compartment → Choose ExaCC shape (X8M/X9M) → Configure maintenance window, DNS, NTP, contacts.</p><div class="console-path">☰ → Oracle Database → ExaCC → Exadata Infrastructure → Create</div><div class="fstep-time">⏱ ~5 min (console) + 4–8 weeks (rack delivery)</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--oracle-red)">2</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Download Configuration File → Send to Oracle</h4><p>Download JSON config. Oracle uses it to provision the physical Exadata rack in your DC.</p><div class="console-path">Infrastructure Details → Download Configuration File (.json)</div><div class="fstep-time">⏱ 4–8 weeks (physical provisioning)</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-blue)">3</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create VM Cluster Network</h4><p>Define Client & Backup VLANs with IPs, VLAN IDs, gateway, netmask, DNS, domain. <strong>This is internal Exa rack networking, NOT VCN.</strong></p><div class="console-path">Infrastructure Details → VM Cluster Networks → Create</div><div class="fstep-time">⏱ ~10 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-blue)">4</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Validate VM Cluster Network</h4><p>Click Validate → OCI checks connectivity. Status: "Requires Validation" → "Validated".</p><div class="console-path">VM Cluster Network Details → Validate</div><div class="fstep-time">⏱ ~15–30 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-green)">5</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create VM Cluster</h4><p>Select validated network → OCPU, memory, storage → SSH keys → License type → GI version.</p><div class="console-path">Infrastructure → VM Clusters → Create VM Cluster</div><div class="fstep-time">⏱ ~2–4 hours</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-purple)">6</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create DB Home + Database</h4><p>VM Cluster → DB Home → Oracle version → Create Database: name, PDB, password, workload, backup, TDE.</p><div class="console-path">VM Cluster → DB Homes → Create DB Home → Create Database</div><div class="fstep-time">⏱ ~45–90 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-orange)">7</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Connect & Verify</h4><p>SSH to node via client VLAN IP → Verify CRS, ASM, listener → SQL*Net on port 1521 via SCAN.</p><div class="console-path">ssh -i key.pem opc@&lt;client-ip&gt;</div><div class="fstep-time">⏱ ~5 min</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: ExaCS PROVISIONING                 ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-exacs" class="panel">
+  <div class="sec-hdr"><h2>ExaCS Provisioning Flow</h2><span class="badge">Cloud Service</span></div>
+  <div class="info"><strong>Key Difference:</strong> ExaCS runs in Oracle's OCI DC. Uses standard VCN subnets — no VLANs. Simpler flow: <strong>VCN/Subnet → VM Cluster → DB Home → Database</strong>.</div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🟠</span>Step-by-Step</div>
+    <div class="flow">
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-blue)">1</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Pre-Req: VCN + Subnets + NSGs</h4><p>Create VCN → Client Subnet (private, /24) → Backup Subnet (private, /24) → NSGs → Service Gateway → Route Table.</p><div class="console-path">☰ → Networking → VCN → Create</div><div class="fstep-time">⏱ ~15–20 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--oracle-red)">2</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Exadata VM Cluster</h4><p>Choose shape (X8M/X9M/X10M) → DB servers, OCPU/node, memory → Client + Backup subnet → SSH keys → GI version → License.</p><div class="info warn" style="margin:8px 0 0"><strong>⚠ No separate Infrastructure step!</strong> Unlike ExaCC, VM Cluster wizard handles infra allocation from Oracle's pool.</div><div class="console-path">☰ → Oracle Database → Exadata on Public Cloud → Create VM Cluster</div><div class="fstep-time">⏱ ~2–4 hours</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-green)">3</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create DB Home</h4><p>Inside VM Cluster → Select Oracle DB version (19c/21c/23ai) → Patch level.</p><div class="console-path">VM Cluster → DB Homes → Create</div><div class="fstep-time">⏱ ~15–30 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-purple)">4</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Database</h4><p>DB name, PDB, password, character set → Workload (OLTP/DSS) → Auto backups → TDE → Data Guard (optional).</p><div class="console-path">DB Home → Databases → Create</div><div class="fstep-time">⏱ ~45–60 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-orange)">5</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Connect & Verify</h4><p>OCI Bastion or jump host → SSH to node → Verify SCAN, CRS, ASM → Easy Connect: host:1521/service.</p><div class="console-path">ssh -i key.pem opc@&lt;private-ip&gt;</div><div class="fstep-time">⏱ ~5 min</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: ADB-D                              ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-adb" class="panel">
+  <div class="sec-hdr"><h2>ADB-D Provisioning Flow</h2><span class="badge badge-green">Autonomous Dedicated</span></div>
+  <div class="info"><strong>Hierarchy:</strong> Exadata Infrastructure → Autonomous VM Cluster → Autonomous Container DB (ACD) → Autonomous Database (ATP/ADW). Port <strong>1522</strong> (not 1521!).</div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🟢</span>Step-by-Step</div>
+    <div class="flow">
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-blue)">1</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Pre-Req: VCN + Subnet</h4><p>VCN → Private client subnet (/24) → Backup subnet → Service GW → NSGs for port 1522.</p><div class="fstep-time">⏱ ~15 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--oracle-red)">2</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Exadata Infrastructure</h4><p>Shape → DB + Storage servers → Maintenance schedule → DNS/NTP. Same infra type as ExaCS but consumed by Autonomous VM Clusters.</p><div class="fstep-time">⏱ ~2–4 hours</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-green)">3</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Autonomous VM Cluster</h4><p>Link to Exa Infra → Client subnet → OCPU + memory → License model. GI auto-managed.</p><div class="fstep-time">⏱ ~1–2 hours</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-purple)">4</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Autonomous Container DB (ACD)</h4><p>Inside AVMC → Patch model (Regular/Autonomous) → Backup dest → Data Guard (optional). ACD is the "shell" for multiple ADBs.</p><div class="fstep-time">⏱ ~30–60 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-orange)">5</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create Autonomous Database</h4><p>Inside ACD → ATP (OLTP) or ADW (DW) → OCPU + storage → Admin password → Private endpoint → Download wallet for mTLS.</p><div class="info" style="margin:8px 0 0"><strong>Port 1522</strong> — Download wallet .zip for mTLS. Or use TLS+ACL for wallet-less connections.</div><div class="fstep-time">⏱ ~10–15 min</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: DBCS                               ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-dbcs" class="panel">
+  <div class="sec-hdr"><h2>DBCS Provisioning Flow</h2><span class="badge badge-blue">VM/BM</span></div>
+  <div class="info"><strong>Simplest provisioning.</strong> Runs on standard OCI VM/BM shapes, not Exadata. Flow: <strong>VCN/Subnet → DB System (includes DB) → Connect</strong>.</div>
+  <div class="card">
+    <div class="card-title"><span class="ico">🔵</span>Step-by-Step</div>
+    <div class="flow">
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-blue)">1</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Pre-Req: VCN + Subnet</h4><p>VCN → Single private subnet (no separate backup subnet needed) → NSG with 1521 + 22.</p><div class="fstep-time">⏱ ~10 min</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--oracle-red)">2</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Create DB System</h4><p>Shape: VM.Standard or BM.DenseIO → Node count (1=single, 2=RAC) → Storage: LVM/ASM → DB version → Subnet → SSH keys → <strong>DB created in same wizard</strong>: name, PDB, password, workload, backups.</p><div class="info warn" style="margin:8px 0 0"><strong>⚠ VM vs BM:</strong> VM supports online OCPU/storage scaling. BM gives max performance. RAC needs 2-node.</div><div class="fstep-time">⏱ ~45–90 min (total)</div></div></div>
+      <div class="fstep"><div class="fstep-line"><div class="fstep-num" style="background:var(--accent-orange)">3</div><div class="fstep-conn"></div></div><div class="fstep-body"><h4>Connect & Verify</h4><p>SSH → Verify listener, DB status → Easy Connect: private-ip:1521/pdb_name.subnet.vcn.oraclevcn.com</p><div class="fstep-time">⏱ ~5 min</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: CHECKLIST                          ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-checklist" class="panel">
+  <div class="sec-hdr"><h2>Provisioning Checklist</h2><span class="badge badge-green">Track Progress</span></div>
+  <div class="info">Click each item as you complete it in the OCI Console. Progress is saved in your browser.</div>
+  
+  <div class="card">
+    <div class="card-title"><span class="ico">📋</span>Pre-Provisioning Checklist</div>
+    <div class="progress-label">Progress: <span id="preProgress">0</span>%</div>
+    <div class="progress-bar"><div class="progress-fill" id="preBar" style="width:0%"></div></div>
+    <div class="checklist" id="preChecklist"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">📋</span>Post-Provisioning Checklist</div>
+    <div class="progress-label">Progress: <span id="postProgress">0</span>%</div>
+    <div class="progress-bar"><div class="progress-fill" id="postBar" style="width:0%"></div></div>
+    <div class="checklist" id="postChecklist"></div>
+  </div>
+
+  <button class="btn btn-red" onclick="resetChecklists()" style="margin-top:8px;">🔄 Reset All Checklists</button>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: TERRAFORM / CLI                    ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-terraform" class="panel">
+  <div class="sec-hdr"><h2>Terraform & OCI CLI Snippets</h2><span class="badge badge-purple">Copy & Deploy</span></div>
+  
+  <div class="card">
+    <div class="card-title"><span class="ico">⚙️</span>Terraform — VCN + Subnets</div>
+    <div class="code-block"><button class="copy-btn copy-float" onclick="copyCode(this)">📋 Copy</button><span class="cm"># VCN</span>
+<span class="kw">resource</span> <span class="str">"oci_core_vcn"</span> <span class="str">"exalab_vcn"</span> {
+  compartment_id = <span class="var">var.compartment_id</span>
+  cidr_blocks    = [<span class="str">"10.0.0.0/16"</span>]
+  display_name   = <span class="str">"vcn-exadata-lab"</span>
+  dns_label      = <span class="str">"exalab"</span>
+}
+
+<span class="cm"># Client Subnet</span>
+<span class="kw">resource</span> <span class="str">"oci_core_subnet"</span> <span class="str">"client"</span> {
+  compartment_id = <span class="var">var.compartment_id</span>
+  vcn_id         = <span class="var">oci_core_vcn.exalab_vcn.id</span>
+  cidr_block     = <span class="str">"10.0.1.0/24"</span>
+  display_name   = <span class="str">"sub-exa-client"</span>
+  dns_label      = <span class="str">"client"</span>
+  prohibit_public_ip_on_vnic = <span class="kw">true</span>
+}
+
+<span class="cm"># Backup Subnet</span>
+<span class="kw">resource</span> <span class="str">"oci_core_subnet"</span> <span class="str">"backup"</span> {
+  compartment_id = <span class="var">var.compartment_id</span>
+  vcn_id         = <span class="var">oci_core_vcn.exalab_vcn.id</span>
+  cidr_block     = <span class="str">"10.0.2.0/24"</span>
+  display_name   = <span class="str">"sub-exa-backup"</span>
+  dns_label      = <span class="str">"backup"</span>
+  prohibit_public_ip_on_vnic = <span class="kw">true</span>
+}
+
+<span class="cm"># Service Gateway</span>
+<span class="kw">resource</span> <span class="str">"oci_core_service_gateway"</span> <span class="str">"sgw"</span> {
+  compartment_id = <span class="var">var.compartment_id</span>
+  vcn_id         = <span class="var">oci_core_vcn.exalab_vcn.id</span>
+  display_name   = <span class="str">"sgw-exalab"</span>
+  services { service_id = <span class="var">data.oci_core_services.all.services[0].id</span> }
+}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">💻</span>OCI CLI — ExaCS VM Cluster</div>
+    <div class="code-block"><button class="copy-btn copy-float" onclick="copyCode(this)">📋 Copy</button><span class="cm"># Create ExaCS VM Cluster</span>
+oci db cloud-vm-cluster create \
+  --compartment-id <span class="var">$COMPARTMENT_ID</span> \
+  --display-name <span class="str">"vmclus-exacs-lab"</span> \
+  --subnet-id <span class="var">$CLIENT_SUBNET_ID</span> \
+  --backup-subnet-id <span class="var">$BACKUP_SUBNET_ID</span> \
+  --cloud-exadata-infrastructure-id <span class="var">$EXA_INFRA_ID</span> \
+  --cpu-core-count <span class="str">4</span> \
+  --gi-version <span class="str">"19.0.0.0"</span> \
+  --hostname <span class="str">"exacslab"</span> \
+  --ssh-authorized-keys-file <span class="var">~/.ssh/id_rsa.pub</span> \
+  --license-model <span class="str">BRING_YOUR_OWN_LICENSE</span>
+
+<span class="cm"># Create DB Home</span>
+oci db db-home create \
+  --vm-cluster-id <span class="var">$VM_CLUSTER_ID</span> \
+  --db-version <span class="str">"19.22.0.0"</span> \
+  --display-name <span class="str">"dbhome-19c"</span>
+
+<span class="cm"># Create Database</span>
+oci db database create \
+  --db-home-id <span class="var">$DB_HOME_ID</span> \
+  --db-name <span class="str">"LABDB"</span> \
+  --pdb-name <span class="str">"PDB1"</span> \
+  --admin-password <span class="str">"YourP@ssw0rd#"</span> \
+  --db-workload <span class="str">OLTP</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">💻</span>OCI CLI — ADB on Dedicated</div>
+    <div class="code-block"><button class="copy-btn copy-float" onclick="copyCode(this)">📋 Copy</button><span class="cm"># Create Autonomous Database on Dedicated Infra</span>
+oci db autonomous-database create \
+  --compartment-id <span class="var">$COMPARTMENT_ID</span> \
+  --autonomous-container-database-id <span class="var">$ACD_ID</span> \
+  --display-name <span class="str">"ADB-LAB-ATP"</span> \
+  --db-name <span class="str">"ATPLAB"</span> \
+  --cpu-core-count <span class="str">2</span> \
+  --data-storage-size-in-tbs <span class="str">1</span> \
+  --admin-password <span class="str">"YourP@ssw0rd#"</span> \
+  --db-workload <span class="str">OLTP</span> \
+  --is-dedicated <span class="kw">true</span>
+
+<span class="cm"># Download Wallet</span>
+oci db autonomous-database generate-wallet \
+  --autonomous-database-id <span class="var">$ADB_ID</span> \
+  --password <span class="str">"WalletP@ss1"</span> \
+  --file <span class="str">wallet_ATPLAB.zip</span></div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: DATA GUARD                         ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-dg" class="panel">
+  <div class="sec-hdr"><h2>Data Guard & DR Architecture</h2><span class="badge">High Availability</span></div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">🔄</span>ExaCS Data Guard Topology</div>
+    <div class="dg-topology">
+      <div class="dg-box dg-primary" style="border-color:var(--accent-green);">
+        <div class="dg-role">PRIMARY</div>
+        <h4>ExaCS — Mumbai (BOM)</h4>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">VM Cluster: vmclus-prod<br>DB: PRODDB / PDB1<br>Subnet: 10.0.1.0/24<br>SCAN: scan-prod:1521</div>
+      </div>
+      <div class="dg-arrow">
+        <div class="dg-label">Redo Transport</div>
+        ⇄
+        <div class="dg-label">ASYNC / SYNC</div>
+      </div>
+      <div class="dg-box dg-standby" style="border-color:var(--accent-orange);">
+        <div class="dg-role">STANDBY</div>
+        <h4>ExaCS — Hyderabad (HYD)</h4>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">VM Cluster: vmclus-dr<br>DB: PRODDB_DR / PDB1<br>Subnet: 10.1.1.0/24<br>SCAN: scan-dr:1521</div>
+      </div>
+    </div>
+    <div class="info" style="margin-top:16px;"><strong>Key Points:</strong> ExaCS DG can be cross-region or cross-AD. Both primary and standby must be on ExaCS (cannot mix with DBCS). Maximum Performance (async) or Maximum Availability (sync within same region). Switchover/failover from OCI Console.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">🔄</span>ExaCC Data Guard Topology</div>
+    <div class="dg-topology">
+      <div class="dg-box dg-primary" style="border-color:var(--accent-green);">
+        <div class="dg-role">PRIMARY</div>
+        <h4>ExaCC — DC Mumbai</h4>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">Your Data Center<br>VLAN Client: 192.168.10.0/24<br>DB: FINDB</div>
+      </div>
+      <div class="dg-arrow">⇄<div class="dg-label">Over FastConnect/VPN</div></div>
+      <div class="dg-box dg-standby" style="border-color:var(--accent-orange);">
+        <div class="dg-role">STANDBY</div>
+        <h4>ExaCC — DC Delhi</h4>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">Your DR Data Center<br>VLAN Client: 192.168.20.0/24<br>DB: FINDB_DR</div>
+      </div>
+    </div>
+    <div class="info warn" style="margin-top:16px;"><strong>⚠ ExaCC↔ExaCC only.</strong> Cannot set up DG between ExaCC and ExaCS. Both must be ExaCC. Network connectivity via FastConnect or IPSec VPN between your DCs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ico">🔄</span>ADB-D — Autonomous Data Guard</div>
+    <div class="dg-topology">
+      <div class="dg-box dg-primary" style="border-color:var(--accent-green);">
+        <div class="dg-role">PRIMARY</div>
+        <h4>ADB-D — Mumbai</h4>
+        <div style="font-size:12px;color:var(--text-secondary);">ACD → ATP Database<br>Port 1522 (mTLS)</div>
+      </div>
+      <div class="dg-arrow">⇄<div class="dg-label">Oracle-Managed</div></div>
+      <div class="dg-box dg-standby" style="border-color:var(--accent-orange);">
+        <div class="dg-role">STANDBY</div>
+        <h4>ADB-D — Hyderabad</h4>
+        <div style="font-size:12px;color:var(--text-secondary);">Peer ACD → Peer ADB<br>Separate wallet needed</div>
+      </div>
+    </div>
+    <div class="info" style="margin-top:16px;"><strong>ADB-D DG</strong> is configured at the Autonomous Container Database level. Failover/switchover available from Console. Separate wallet download required for standby.</div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: ON-PREM VS CLOUD                   ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-onprem" class="panel">
+  <div class="sec-hdr"><h2>On-Premises Exadata vs Cloud</h2><span class="badge">Migration Context</span></div>
+  <div class="info">This comparison helps DBAs understand what changes when moving from an on-premises Exadata to ExaCS or ExaCC.</div>
+  <div class="card">
+    <table class="cmp-table">
+      <thead><tr><th>Aspect</th><th>On-Prem Exadata</th><th>ExaCS (OCI)</th><th>ExaCC</th></tr></thead>
+      <tbody>
+        <tr><td class="feature">Location</td><td>Your DC, your rack</td><td>Oracle's OCI DC</td><td>Your DC, Oracle's rack</td></tr>
+        <tr><td class="feature">Hardware Ownership</td><td>You buy & own</td><td>Oracle owns</td><td>Oracle owns (leased)</td></tr>
+        <tr><td class="feature">Network</td><td>Your switches, VLANs</td><td>OCI VCN + Subnets</td><td>Your network + VLANs</td></tr>
+        <tr><td class="feature">Patching — Infra</td><td>You do everything</td><td>Oracle (scheduled)</td><td>Oracle (you schedule)</td></tr>
+        <tr><td class="feature">Patching — DB/GI</td><td>You do everything</td><td>You schedule via Console</td><td>You schedule via Console</td></tr>
+        <tr><td class="feature">Storage Management</td><td>Full cellcli access</td><td>No cell access (managed)</td><td>No cell access (managed)</td></tr>
+        <tr><td class="feature">IORM</td><td>Full cellcli control</td><td>Via Console/API</td><td>Via Console/API</td></tr>
+        <tr><td class="feature">OS Access</td><td>Full root</td><td>opc (sudo most)</td><td>opc (sudo most)</td></tr>
+        <tr><td class="feature">Scaling</td><td>Buy more hardware</td><td>Online OCPU/storage</td><td>Online OCPU/storage</td></tr>
+        <tr><td class="feature">Backup</td><td>Your infra (tape/NFS)</td><td>Object Storage (auto)</td><td>Object Storage or local</td></tr>
+        <tr><td class="feature">Data Guard</td><td>Manual setup</td><td>Console click</td><td>Console click</td></tr>
+        <tr><td class="feature">Billing</td><td>CapEx (one-time)</td><td>OpEx (hourly/monthly)</td><td>OpEx (monthly)</td></tr>
+        <tr><td class="feature">Smart Scan</td><td class="check-yes">✓ Full</td><td class="check-yes">✓ Full</td><td class="check-yes">✓ Full</td></tr>
+        <tr><td class="feature">RDMA / InfiniBand</td><td class="check-yes">✓</td><td class="check-yes">✓ (RoCE on X8M+)</td><td class="check-yes">✓ (RoCE on X8M+)</td></tr>
+        <tr><td class="feature">Exadata Storage Indexes</td><td class="check-yes">✓</td><td class="check-yes">✓</td><td class="check-yes">✓</td></tr>
+        <tr><td class="feature">cellcli / dcli</td><td class="check-yes">✓ Full</td><td class="check-no">✗ No access</td><td class="check-no">✗ No access</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: TROUBLESHOOT                       ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-trouble" class="panel">
+  <div class="sec-hdr"><h2>Troubleshooting Guide</h2><span class="badge">Common Errors</span></div>
+  <div class="info">Click each error to expand the fix. These are the most common provisioning failures.</div>
+  <div id="troubleList"></div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: QUIZ                               ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-quiz" class="panel">
+  <div class="sec-hdr"><h2>Knowledge Check — Quiz</h2><span class="badge badge-purple">Test Yourself</span></div>
+  <div class="info">Test your understanding of ExaCC, ExaCS, ADB-D, and DBCS provisioning. Click an option to answer.</div>
+  <div id="quizContainer"></div>
+  <div class="quiz-score" id="quizScore" style="display:none;">
+    <div class="score-num" id="scoreNum">0/0</div>
+    <div class="score-label">Questions Answered Correctly</div>
+    <button class="btn btn-red" onclick="resetQuiz()" style="margin-top:16px;">🔄 Retry Quiz</button>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  TAB: COMPARISON                         ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="p-compare" class="panel">
+  <div class="sec-hdr"><h2>Quick Comparison — All 4 Services</h2><span class="badge">Reference</span></div>
+  <div class="spec-grid">
+    <div class="spec-card" style="border-top-color:var(--oracle-red);"><h3><span style="color:var(--oracle-red)">●</span> ExaCC</h3>
+      <div class="spec-row"><span class="spec-key">Location</span><span class="spec-val">Your Data Center</span></div>
+      <div class="spec-row"><span class="spec-key">Network</span><span class="spec-val">VLANs (not VCN)</span></div>
+      <div class="spec-row"><span class="spec-key">Min Subnet</span><span class="spec-val">/28 (client+backup)</span></div>
+      <div class="spec-row"><span class="spec-key">Steps</span><span class="spec-val">Infra→Net→VMC→DBH→DB</span></div>
+      <div class="spec-row"><span class="spec-key">DB Port</span><span class="spec-val">1521</span></div>
+      <div class="spec-row"><span class="spec-key">Scaling</span><span class="spec-val">OCPU, Storage online</span></div>
+      <div class="spec-row"><span class="spec-key">Patching</span><span class="spec-val">Rolling, you schedule</span></div>
+      <div class="spec-row"><span class="spec-key">Data Guard</span><span class="spec-val">ExaCC↔ExaCC only</span></div>
+    </div>
+    <div class="spec-card" style="border-top-color:var(--accent-orange);"><h3><span style="color:var(--accent-orange)">●</span> ExaCS</h3>
+      <div class="spec-row"><span class="spec-key">Location</span><span class="spec-val">OCI Data Center</span></div>
+      <div class="spec-row"><span class="spec-key">Network</span><span class="spec-val">VCN Subnets</span></div>
+      <div class="spec-row"><span class="spec-key">Min Subnet</span><span class="spec-val">/24 recommended</span></div>
+      <div class="spec-row"><span class="spec-key">Steps</span><span class="spec-val">VCN→VMClus→DBH→DB</span></div>
+      <div class="spec-row"><span class="spec-key">DB Port</span><span class="spec-val">1521</span></div>
+      <div class="spec-row"><span class="spec-key">Scaling</span><span class="spec-val">OCPU, Storage online</span></div>
+      <div class="spec-row"><span class="spec-key">Patching</span><span class="spec-val">Rolling, you schedule</span></div>
+      <div class="spec-row"><span class="spec-key">Data Guard</span><span class="spec-val">Cross-region/AD</span></div>
+    </div>
+    <div class="spec-card" style="border-top-color:var(--accent-green);"><h3><span style="color:var(--accent-green)">●</span> ADB-D</h3>
+      <div class="spec-row"><span class="spec-key">Location</span><span class="spec-val">OCI Data Center</span></div>
+      <div class="spec-row"><span class="spec-key">Network</span><span class="spec-val">VCN Subnets</span></div>
+      <div class="spec-row"><span class="spec-key">Min Subnet</span><span class="spec-val">/24 recommended</span></div>
+      <div class="spec-row"><span class="spec-key">Steps</span><span class="spec-val">Infra→AVMC→ACD→ADB</span></div>
+      <div class="spec-row"><span class="spec-key">DB Port</span><span class="spec-val">1522 (mTLS)</span></div>
+      <div class="spec-row"><span class="spec-key">Scaling</span><span class="spec-val">OCPU auto-scaling</span></div>
+      <div class="spec-row"><span class="spec-key">Patching</span><span class="spec-val">Oracle-managed</span></div>
+      <div class="spec-row"><span class="spec-key">Data Guard</span><span class="spec-val">Autonomous DG</span></div>
+    </div>
+    <div class="spec-card" style="border-top-color:var(--accent-blue);"><h3><span style="color:var(--accent-blue)">●</span> DBCS</h3>
+      <div class="spec-row"><span class="spec-key">Location</span><span class="spec-val">OCI Data Center</span></div>
+      <div class="spec-row"><span class="spec-key">Network</span><span class="spec-val">VCN Subnet</span></div>
+      <div class="spec-row"><span class="spec-key">Min Subnet</span><span class="spec-val">/24 (single OK)</span></div>
+      <div class="spec-row"><span class="spec-key">Steps</span><span class="spec-val">VCN→DBSystem (incl. DB)</span></div>
+      <div class="spec-row"><span class="spec-key">DB Port</span><span class="spec-val">1521</span></div>
+      <div class="spec-row"><span class="spec-key">Scaling</span><span class="spec-val">VM: online. BM: fixed</span></div>
+      <div class="spec-row"><span class="spec-key">Patching</span><span class="spec-val">You schedule + apply</span></div>
+      <div class="spec-row"><span class="spec-key">Data Guard</span><span class="spec-val">Cross-AD/region</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px;">
+    <div class="card-title"><span class="ico">🗺️</span>Provisioning Hierarchy</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:10px;">
+      <div style="background:var(--bg-elevated);border-radius:8px;padding:14px;border-left:4px solid var(--oracle-red);"><div style="font-size:11px;font-weight:700;color:var(--oracle-red);margin-bottom:8px;">ExaCC</div><div class="mono" style="font-size:10px;line-height:2.2;color:var(--text-secondary);">Exadata Infrastructure<br>└─ VM Cluster Network<br>&nbsp;&nbsp;└─ VM Cluster<br>&nbsp;&nbsp;&nbsp;&nbsp;└─ DB Home<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ Database → PDB</div></div>
+      <div style="background:var(--bg-elevated);border-radius:8px;padding:14px;border-left:4px solid var(--accent-orange);"><div style="font-size:11px;font-weight:700;color:var(--accent-orange);margin-bottom:8px;">ExaCS</div><div class="mono" style="font-size:10px;line-height:2.2;color:var(--text-secondary);">VCN + Subnets<br>└─ VM Cluster<br>&nbsp;&nbsp;└─ DB Home<br>&nbsp;&nbsp;&nbsp;&nbsp;└─ Database → PDB</div></div>
+      <div style="background:var(--bg-elevated);border-radius:8px;padding:14px;border-left:4px solid var(--accent-green);"><div style="font-size:11px;font-weight:700;color:var(--accent-green);margin-bottom:8px;">ADB-D</div><div class="mono" style="font-size:10px;line-height:2.2;color:var(--text-secondary);">Exadata Infrastructure<br>└─ Autonomous VM Cluster<br>&nbsp;&nbsp;└─ Container DB (ACD)<br>&nbsp;&nbsp;&nbsp;&nbsp;└─ Autonomous DB</div></div>
+      <div style="background:var(--bg-elevated);border-radius:8px;padding:14px;border-left:4px solid var(--accent-blue);"><div style="font-size:11px;font-weight:700;color:var(--accent-blue);margin-bottom:8px;">DBCS</div><div class="mono" style="font-size:10px;line-height:2.2;color:var(--text-secondary);">VCN + Subnet<br>└─ DB System (VM/BM)<br>&nbsp;&nbsp;└─ DB Home<br>&nbsp;&nbsp;&nbsp;&nbsp;└─ Database → PDB</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Designed & Architected by <strong>Krishna</strong> — Master Cloud Architect</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('p-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ═══════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+  try { localStorage.setItem('egTheme', html.getAttribute('data-theme')); } catch(e){}
+}
+try { const t = localStorage.getItem('egTheme'); if(t) document.documentElement.setAttribute('data-theme',t); } catch(e){}
+
+// ═══════════════════════════════════════════
+// INTERACTIVE ARCHITECTURE
+// ═══════════════════════════════════════════
+const archData = {
+  vcn: { title:'VCN — vcn-exadata-lab', items:[['CIDR','10.0.0.0/16'],['DNS Label','exalab'],['Compartment','cmp-network-prod'],['Region','ap-mumbai-1'],['Total IPs','65,536'],['Subnets','3 (Client, Backup, App)'],['Gateways','SGW, NAT, DRG']] },
+  client: { title:'Client Subnet', items:[['CIDR','10.0.1.0/24'],['Usable IPs','249 (OCI reserves 5)'],['Type','Private'],['DNS Label','client'],['Route Table','rt-client-private'],['Security','NSG: nsg-exa-client'],['Purpose','DB node client access, SCAN, VIPs'],['Key Ports','1521, 2484, 6200, 22']] },
+  backup: { title:'Backup Subnet', items:[['CIDR','10.0.2.0/24'],['Usable IPs','249'],['Type','Private'],['Purpose','RMAN backup, DG redo transport'],['Route Table','rt-backup-sgw'],['Key Ports','Egress 443 (Object Storage)']] },
+  app: { title:'Application Subnet', items:[['CIDR','10.0.3.0/24'],['Usable IPs','249'],['Type','Private'],['Purpose','App tier, Bastion, Jump hosts'],['Bastion Service','OCI Bastion recommended'],['Key Ports','22 (SSH), 443 (HTTPS)']] },
+  exainfra: { title:'Exadata Infrastructure', items:[['Shape','X9M-2'],['DB Servers','2'],['Storage Servers','3'],['Storage','~76.8 TB usable'],['Network','RoCE (RDMA over Converged Ethernet)'],['Maintenance','Monthly window, Oracle-managed'],['Status','Active']] },
+  vmcluster: { title:'VM Cluster', items:[['OCPU per Node','4 (scalable to 126)'],['Memory per Node','60 GB'],['Local Storage','200 GB per node'],['GI Version','19.22.0.0'],['ASM Diskgroups','DATA, RECO, DBFS'],['License','BYOL'],['SSH Access','opc user']] },
+  database: { title:'Database', items:[['Version','19c EE-HP'],['DB Name','LABDB'],['PDB','PDB1'],['CDB','Yes'],['Workload','OLTP'],['Port','1521 (SCAN)'],['Auto Backup','Enabled (Object Storage)'],['TDE','Enabled (OCI Vault)'],['Character Set','AL32UTF8']] },
+  sgw: { title:'Service Gateway', items:[['Type','All Services in Region'],['Purpose','Access Oracle Services Network'],['Used For','Object Storage backup, OS patches'],['Route Rule','0.0.0.0/0 → SGW (for OSN)'],['Cost','Free']] },
+  natgw: { title:'NAT Gateway', items:[['Purpose','Outbound internet for private subnets'],['Used For','OS updates, RPM packages, diagnostics'],['Cost','Pay per GB processed'],['Note','No inbound internet access']] },
+  drg: { title:'Dynamic Routing Gateway', items:[['Purpose','Connect to on-premises network'],['Via','FastConnect (dedicated) or IPSec VPN'],['Bandwidth','1-10 Gbps (FastConnect)'],['Used For','DBA access, app connectivity, DG transport'],['Critical For','ExaCC (mandatory for control plane)']] },
+};
+function showArchDetail(key, e) {
+  const d = archData[key];
+  if(!d) return;
+  document.getElementById('archDetailTitle').textContent = d.title;
+  document.getElementById('archDetailGrid').innerHTML = d.items.map(([k,v])=>`<div class="detail-item"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('');
+  document.getElementById('archDetailPanel').classList.add('show');
+  document.querySelectorAll('.arch-box').forEach(b=>b.classList.remove('selected'));
+  if(e && e.currentTarget) e.currentTarget.classList.add('selected');
+}
+
+// ═══════════════════════════════════════════
+// CIDR CALCULATOR
+// ═══════════════════════════════════════════
+function ipToLong(ip){return ip.split('.').reduce((a,o)=>(a<<8)+parseInt(o),0)>>>0;}
+function longToIp(n){return[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');}
+function calcCIDR(){
+  const input=document.getElementById('vcnCidr').value.trim(), dt=document.getElementById('deployType').value, cs=parseInt(document.getElementById('subnetSize').value);
+  const m=input.match(/^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/);
+  if(!m){document.getElementById('cidrOut').innerHTML='<div class="info danger"><strong>Invalid CIDR!</strong></div>';return;}
+  const base=ipToLong(m[1]),vp=parseInt(m[2]);
+  if(cs<=vp){document.getElementById('cidrOut').innerHTML='<div class="info danger"><strong>Error:</strong> Subnet prefix must be larger than VCN.</div>';return;}
+  const cfgs={
+    exacc:[{n:'ExaCC Client',t:'Private',p:'DB client, SCAN, VIPs',x:cs},{n:'ExaCC Backup',t:'Private',p:'RMAN, DG redo',x:cs},{n:'ExaCC Admin',t:'Private',p:'Control plane',x:Math.min(cs+2,28)},{n:'App/Bastion',t:'Private',p:'App tier, jump hosts',x:cs}],
+    exacs:[{n:'ExaCS Client',t:'Private',p:'DB client, SCAN',x:cs},{n:'ExaCS Backup',t:'Private',p:'RMAN, DG',x:cs},{n:'App/Bastion',t:'Private',p:'App tier',x:cs}],
+    adb:[{n:'ADB-D Client',t:'Private',p:'Private endpoint (1522)',x:cs},{n:'ADB-D Backup',t:'Private',p:'Obj Storage via SGW',x:cs},{n:'App',t:'Private',p:'App connectivity',x:cs}],
+    dbcs:[{n:'DBCS',t:'Private',p:'DB System nodes',x:cs},{n:'App',t:'Private',p:'App tier',x:cs}],
+    all:[{n:'ExaCC Client',t:'Private',p:'ExaCC DB',x:cs},{n:'ExaCC Backup',t:'Private',p:'ExaCC backup',x:cs},{n:'ExaCC Admin',t:'Private',p:'Control plane',x:Math.min(cs+2,28)},{n:'ExaCS Client',t:'Private',p:'ExaCS DB',x:cs},{n:'ExaCS Backup',t:'Private',p:'ExaCS backup',x:cs},{n:'ADB-D Client',t:'Private',p:'ADB endpoint',x:cs},{n:'DBCS',t:'Private',p:'DBCS nodes',x:cs},{n:'App/Bastion',t:'Private',p:'App tier',x:cs},{n:'Public',t:'Public',p:'Load Balancer',x:cs}],
+  };
+  let cur=base,subs=[];
+  cfgs[dt].forEach(c=>{const sz=Math.pow(2,32-c.x),h=sz-5;subs.push({name:c.n,cidr:longToIp(cur)+'/'+c.x,hosts:Math.max(h,0),type:c.t,purpose:c.p,range:longToIp(cur)+' — '+longToIp(cur+sz-1)});cur+=sz;});
+  let h=`<div class="info" style="margin-bottom:14px;"><strong>VCN:</strong> ${input} | <strong>Deploy:</strong> ${dt.toUpperCase()} | <strong>Subnets:</strong> ${subs.length} | <strong>VCN IPs:</strong> ${Math.pow(2,32-vp).toLocaleString()}</div><table class="tbl"><thead><tr><th>Subnet</th><th>CIDR</th><th>Range</th><th>Hosts</th><th>Access</th><th>Purpose</th></tr></thead><tbody>`;
+  subs.forEach(s=>{h+=`<tr><td style="font-weight:600">${s.name}</td><td class="cidr-val">${s.cidr}</td><td class="mono" style="font-size:10px;color:var(--text-muted)">${s.range}</td><td style="text-align:center;font-weight:700;color:var(--accent-green)">${s.hosts}</td><td><span class="type-badge ${s.type==='Private'?'type-priv':'type-pub'}">${s.type}</span></td><td style="font-size:11px;color:var(--text-secondary)">${s.purpose}</td></tr>`;});
+  h+='</tbody></table>';
+  h+=`<div class="info" style="margin-top:14px;"><strong>Required Gateways:</strong> Service GW (all) • NAT GW (outbound) • DRG (FastConnect/VPN)${dt==='all'?' • Internet GW (public subnet)':''}</div>`;
+  document.getElementById('cidrOut').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════
+// NSG BUILDER
+// ═══════════════════════════════════════════
+const nsgRules = {
+  exacc: [
+    {dir:'Ingress',proto:'TCP',port:'1521',src:'App Subnet CIDR',purpose:'SQL*Net from apps'},
+    {dir:'Ingress',proto:'TCP',port:'1521',src:'Client Subnet CIDR',purpose:'Inter-node RAC'},
+    {dir:'Ingress',proto:'TCP',port:'2484',src:'App Subnet CIDR',purpose:'SQL*Net TLS (TCPS)'},
+    {dir:'Ingress',proto:'TCP',port:'6200',src:'Client Subnet CIDR',purpose:'ONS (FAN events)'},
+    {dir:'Ingress',proto:'TCP',port:'22',src:'Bastion Subnet CIDR',purpose:'SSH access'},
+    {dir:'Egress',proto:'TCP',port:'443',src:'OSN CIDR',purpose:'Object Storage (Service GW)'},
+    {dir:'Ingress',proto:'TCP',port:'6100',src:'Client Subnet CIDR',purpose:'OACP (ExaCC control plane)'},
+  ],
+  exacs: [
+    {dir:'Ingress',proto:'TCP',port:'1521',src:'App Subnet CIDR',purpose:'SQL*Net from apps'},
+    {dir:'Ingress',proto:'TCP',port:'1521',src:'Client Subnet CIDR',purpose:'Inter-node RAC'},
+    {dir:'Ingress',proto:'TCP',port:'2484',src:'App Subnet CIDR',purpose:'SQL*Net TLS'},
+    {dir:'Ingress',proto:'TCP',port:'6200',src:'Client Subnet CIDR',purpose:'ONS (FAN)'},
+    {dir:'Ingress',proto:'TCP',port:'22',src:'Bastion Subnet CIDR',purpose:'SSH access'},
+    {dir:'Egress',proto:'TCP',port:'443',src:'OSN CIDR',purpose:'Object Storage'},
+  ],
+  adb: [
+    {dir:'Ingress',proto:'TCP',port:'1522',src:'App Subnet CIDR',purpose:'ADB mTLS connection'},
+    {dir:'Ingress',proto:'TCP',port:'443',src:'App Subnet CIDR',purpose:'HTTPS (DB Actions)'},
+    {dir:'Egress',proto:'TCP',port:'443',src:'OSN CIDR',purpose:'Object Storage backup'},
+    {dir:'Ingress',proto:'TCP',port:'22',src:'Bastion Subnet CIDR',purpose:'SSH (if needed)'},
+  ],
+  dbcs: [
+    {dir:'Ingress',proto:'TCP',port:'1521',src:'App Subnet CIDR',purpose:'SQL*Net'},
+    {dir:'Ingress',proto:'TCP',port:'22',src:'Bastion Subnet CIDR',purpose:'SSH access'},
+    {dir:'Egress',proto:'TCP',port:'443',src:'OSN CIDR',purpose:'Object Storage'},
+    {dir:'Egress',proto:'TCP',port:'80',src:'0.0.0.0/0',purpose:'OS updates (via NAT)'},
+  ],
+};
+let currentNSG = 'exacc';
+function buildNSG(svc, e) {
+  currentNSG = svc;
+  document.querySelectorAll('.nsg-svc-btn').forEach(b=>b.classList.remove('active'));
+  if(e && e.currentTarget) { e.currentTarget.classList.add('active'); }
+  else { document.querySelectorAll('.nsg-svc-btn').forEach(b=>{ if(b.textContent.trim().toLowerCase()===svc) b.classList.add('active'); }); }
+  const rules = nsgRules[svc];
+  let h=`<table class="tbl"><thead><tr><th>Direction</th><th>Protocol</th><th>Port</th><th>Source/Destination</th><th>Purpose</th></tr></thead><tbody>`;
+  rules.forEach(r=>{h+=`<tr><td>${r.dir}</td><td>${r.proto}</td><td class="mono" style="color:var(--accent-cyan)">${r.port}</td><td class="mono" style="font-size:11px">${r.src}</td><td style="font-size:11px;color:var(--text-secondary)">${r.purpose}</td></tr>`;});
+  h+='</tbody></table>';
+  document.getElementById('nsgOut').innerHTML=h;
+}
+function copyNSG(fmt, e) {
+  const rules = nsgRules[currentNSG];
+  let text = '';
+  if(fmt==='table') {
+    text = 'Direction\tProtocol\tPort\tSource/Dest\tPurpose\n' + rules.map(r=>`${r.dir}\t${r.proto}\t${r.port}\t${r.src}\t${r.purpose}`).join('\n');
+  } else if(fmt==='terraform') {
+    text = rules.map((r,i)=>`resource "oci_core_network_security_group_security_rule" "rule_${i}" {\n  network_security_group_id = var.nsg_id\n  direction = "${r.dir===`Ingress`?`INGRESS`:`EGRESS`}"\n  protocol = "6" # TCP\n  ${r.dir==='Ingress'?'source':'destination'} = "${r.src}"\n  tcp_options { destination_port_range { min = ${r.port}; max = ${r.port} } }\n}`).join('\n\n');
+  } else {
+    text = rules.map(r=>`oci network nsg rules add \\\n  --nsg-id $NSG_ID \\\n  --direction ${r.dir.toUpperCase()} \\\n  --protocol 6 \\\n  --${r.dir==='Ingress'?'source':'destination'} "${r.src}" \\\n  --tcp-options '{"destinationPortRange":{"min":${r.port},"max":${r.port}}}'`).join('\n\n');
+  }
+  const btn = e && e.currentTarget ? e.currentTarget : null;
+  navigator.clipboard.writeText(text).then(()=>{
+    if(btn) { const orig = btn.textContent; btn.textContent = '✅ Copied!'; setTimeout(()=>btn.textContent=orig, 1500); }
+  });
+}
+
+// ═══════════════════════════════════════════
+// CHECKLIST
+// ═══════════════════════════════════════════
+const preItems = [
+  {id:'pre1',title:'Tenancy & Compartments Created',desc:'Root → cmp-network → cmp-database → service-specific compartments'},
+  {id:'pre2',title:'IAM Policies Configured',desc:'NetworkAdmins, DBAdmins, ExaCCAdmins groups with proper policies'},
+  {id:'pre3',title:'SSH Key Pair Generated',desc:'ssh-keygen -t rsa -b 4096. Keep private key safe. Public key needed for provisioning.'},
+  {id:'pre4',title:'VCN & Subnets Designed',desc:'CIDR planned, client + backup subnets sized (/24 min), no overlap with on-prem.'},
+  {id:'pre5',title:'NSG Rules Configured',desc:'Ports 1521, 2484, 6200, 22 ingress. 443 egress to OSN.'},
+  {id:'pre6',title:'Service Gateway Created',desc:'Required for Object Storage backup access from private subnets.'},
+  {id:'pre7',title:'Route Tables Configured',desc:'Private subnet → SGW rule for OSN, NAT GW rule for internet.'},
+  {id:'pre8',title:'DNS & NTP Servers Identified',desc:'For ExaCC: your internal DNS/NTP. For ExaCS: OCI default or custom.'},
+  {id:'pre9',title:'License Model Decided',desc:'BYOL (existing licenses) or License Included (pay via OCI).'},
+  {id:'pre10',title:'Backup Strategy Planned',desc:'Auto backup to Object Storage? Manual RMAN? Retention period?'},
+];
+const postItems = [
+  {id:'post1',title:'SSH to DB Node Verified',desc:'ssh -i key.pem opc@<private-ip> — can you connect?'},
+  {id:'post2',title:'CRS Status Verified',desc:'crsctl stat res -t — all resources ONLINE?'},
+  {id:'post3',title:'ASM Diskgroups Checked',desc:'asmcmd lsdg — DATA, RECO diskgroups visible and mounted?'},
+  {id:'post4',title:'Listener Running',desc:'lsnrctl status — SCAN listener registered with services?'},
+  {id:'post5',title:'Database Open',desc:'sqlplus / as sysdba → SELECT STATUS FROM V$INSTANCE — should be OPEN.'},
+  {id:'post6',title:'PDB Open',desc:'ALTER PLUGGABLE DATABASE ALL OPEN; → Verify PDB status.'},
+  {id:'post7',title:'Backup Tested',desc:'Run a manual backup to Object Storage. Verify in Console.'},
+  {id:'post8',title:'SQL*Net from App Subnet Tested',desc:'From app/bastion host: sqlplus user/pass@scan:1521/pdb_service'},
+  {id:'post9',title:'TDE Wallet Backed Up',desc:'Export TDE master key and store backup securely.'},
+  {id:'post10',title:'Monitoring Configured',desc:'OCI Monitoring alarms for CPU, storage, DB status.'},
+];
+function renderChecklist(items, containerId, progressId, barId) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('egChecklist_'+containerId) || '{}'); } catch(e){}
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map(item => {
+    const done = saved[item.id] || false;
+    return `<div class="check-item ${done?'done':''}" onclick="toggleCheck('${containerId}','${item.id}','${progressId}','${barId}',${items.length})">
+      <div class="check-box"></div>
+      <div class="check-text"><h4>${item.title}</h4><p>${item.desc}</p></div>
+    </div>`;
+  }).join('');
+  updateProgress(containerId, progressId, barId, items.length);
+}
+function toggleCheck(cid, iid, pid, bid, total) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('egChecklist_'+cid) || '{}'); } catch(e){}
+  saved[iid] = !saved[iid];
+  try { localStorage.setItem('egChecklist_'+cid, JSON.stringify(saved)); } catch(e){}
+  const items = cid === 'preChecklist' ? preItems : postItems;
+  renderChecklist(items, cid, pid, bid);
+}
+function updateProgress(cid, pid, bid, total) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('egChecklist_'+cid) || '{}'); } catch(e){}
+  const done = Object.values(saved).filter(Boolean).length;
+  const pct = Math.round((done/total)*100);
+  document.getElementById(pid).textContent = pct;
+  document.getElementById(bid).style.width = pct + '%';
+}
+function resetChecklists() {
+  try { localStorage.removeItem('egChecklist_preChecklist'); localStorage.removeItem('egChecklist_postChecklist'); } catch(e){}
+  renderChecklist(preItems, 'preChecklist', 'preProgress', 'preBar');
+  renderChecklist(postItems, 'postChecklist', 'postProgress', 'postBar');
+}
+
+// ═══════════════════════════════════════════
+// TROUBLESHOOTING
+// ═══════════════════════════════════════════
+const troubles = [
+  {error:'Error: Subnet CIDR too small for Exadata',fixes:['Client subnet needs at minimum /28 (14 hosts) for ExaCC, /24 recommended for ExaCS.','Each DB node needs 3 IPs: host IP + VIP + SCAN. 2-node RAC = 6 client IPs + 3 SCAN IPs minimum.','Resize subnet or create a new larger subnet and re-provision.']},
+  {error:'Error: NSG rules missing — cannot connect on 1521',fixes:['Verify NSG attached to subnet has Ingress TCP 1521 from your app subnet CIDR.','Check both source and destination NSGs — both must allow the traffic.','Verify route table has correct rules (no asymmetric routing).']},
+  {error:'Error: VM Cluster Network validation failed',fixes:['ExaCC only: Verify VLAN IDs are not conflicting with existing VLANs on your switch.','Check that gateway IP is reachable from the Exadata rack network.','Ensure DNS servers are accessible from the VLAN network. Test with nslookup.','Verify NTP servers are reachable. Clock skew causes GI startup failures.']},
+  {error:'Error: Service Gateway not working — backup fails',fixes:['Verify SGW is created with "All Services in Region" option.','Check route table attached to backup subnet has rule: 0.0.0.0/0 → Service Gateway.','Verify NSG allows Egress TCP 443 to OSN CIDR (Oracle Services Network).']},
+  {error:'Error: SSH connection timeout to DB node',fixes:['DB nodes are in private subnet — you need a Bastion or jump host in app subnet.','OCI Bastion Service: Create bastion in app subnet → Create SSH session to DB node.','Verify NSG allows Ingress TCP 22 from your bastion/app subnet CIDR.','Check route table — private subnet should NOT have internet gateway route.']},
+  {error:'Error: ADB wallet download / mTLS connection fails',fixes:['ADB uses port 1522, not 1521. Update your connection string.','Download wallet from Console → Autonomous Database → DB Connection → Download.','Unzip wallet → set TNS_ADMIN to wallet directory → use service name from tnsnames.ora.','For wallet-less TLS: configure ACL with your app subnet CIDR.']},
+  {error:'Error: Insufficient service limits / quota',fixes:['Check Service Limits: ☰ → Governance → Limits, Quotas, Usage.','Request limit increase: ☰ → Support → Create Service Request → "Service Limit Increase".','Common limits: Exadata OCPUs, VM.Standard shapes, Block Volume storage.','ExaCS requires specific Exadata shape limits in your region.']},
+  {error:'Error: Database creation fails — TDE wallet error',fixes:['Ensure OCI Vault is created and accessible from your compartment.','IAM policy needed: Allow group DBAdmins to use vaults in compartment cmp-security.','If using auto-managed TDE: ensure the database compartment can access vault keys.','Check that the vault is in the same region as the database.']},
+  // ═══ NEW TROUBLESHOOTING ITEMS ═══
+  {error:'Error: VM Cluster creation stuck in "Provisioning" for hours',fixes:['Normal provisioning takes 2–4 hours. Wait at least 4 hours before raising SR.','Check OCI Service Health dashboard for region-wide incidents: console → ☰ → Service Health.','Verify Exadata Infrastructure status is "Active" (not "Maintenance In Progress").','If stuck beyond 6 hours: raise Oracle Support SR with the VM Cluster OCID.','For ExaCC: verify network connectivity between rack and OCI control plane via admin VLAN.']},
+  {error:'Error: SCAN listener not registering services after DB creation',fixes:['SSH to node: lsnrctl status — check if LOCAL listener is up but SCAN is not.','Verify SCAN DNS resolution: nslookup <scan-hostname> — should return 3 SCAN IPs.','Check remote_listener parameter: SQL> SHOW PARAMETER remote_listener — should point to SCAN:1521.','Run: srvctl status scan_listener — if not running: srvctl start scan_listener.','If DNS is misconfigured: srvctl modify scan -scanname <correct-scan-name> then restart.']},
+  {error:'Error: CRS/GI fails to start after patching',fixes:['Check GI logs: tail -100 $ORACLE_BASE/diag/crs/$(hostname)/crs/trace/crsd.trc','Common cause: NTP clock skew between nodes. Run: ntpstat or chronyc tracking.','Check ASM disk status: crsctl stat res -t — if ASM shows OFFLINE, check diskgroup mount.','Try manual restart: crsctl start crs — watch for ORA- errors in output.','If votedisk corrupted: use crsctl replace votedisk from surviving node.']},
+  {error:'Error: Data Guard broker shows transport lag > 0',fixes:['Check network latency between primary and standby: ping <standby-ip>.','Verify redo transport mode: DGMGRL> show configuration — check LogXptMode.','Check standby redo log group count — should be one more group than primary online redo logs.','For ExaCC: check FastConnect/VPN bandwidth — large transaction volumes may saturate the link.','Run: DGMGRL> show database <standby-db> — look for LogXptStatus errors.']},
+  {error:'Error: Automatic backup to Object Storage fails with ORA-19511',fixes:['Verify Object Storage bucket exists and is in the same region as the database.','Check IAM policy: Allow service objectstorage-<region> to manage object-family in tenancy.','For ExaCS/ExaCC: backup goes through Service Gateway — verify SGW is "All Services".','Check NSG egress rule: TCP 443 to Oracle Services Network CIDR.','Verify backup destination config: OCI Console → DB System → Backups → Backup Destination.']},
+  {error:'Error: Cannot scale OCPU — "Request exceeds available capacity"',fixes:['This means the underlying Exadata infrastructure does not have enough unallocated OCPUs.','For ExaCS: check if other VM Clusters on the same infra are consuming OCPUs.','Reduce OCPUs on other VM Clusters first, or add more Exadata infrastructure capacity.','For DBCS: check that your tenancy service limits allow the target OCPU count.','Region availability matters — try a different AD if your region has multiple ADs.']},
+  {error:'Error: DBCS RAC — second node not joining cluster',fixes:['Verify both nodes are in the same subnet and can ping each other on private interconnect.','Check GI status on node 2: crsctl check crs — look for communication errors.','Verify NSG allows ALL traffic between nodes within the client subnet CIDR (not just 1521).','RAC requires ports: 1521, 6200 (ONS), + private interconnect ports — ensure no blocks.','Check /etc/hosts on both nodes — each must resolve the other node\'s hostname and VIP correctly.']},
+  {error:'Error: ExaCC Infrastructure status shows "Requires Activation"',fixes:['This means Oracle has shipped/installed the rack but the control plane handshake is pending.','Verify admin VLAN connectivity from the Exadata rack to Oracle\'s control plane endpoints.','Check firewall rules — ExaCC admin VLAN must allow outbound HTTPS (443) to Oracle CP.','Contact Oracle Support with your Infrastructure OCID to trigger activation.','DNS resolution from the admin VLAN must work for Oracle cloud endpoints.']},
+  {error:'Error: PDB not opening automatically after CDB restart',fixes:['By default, PDBs don\'t auto-open unless you save the state.','Run: ALTER PLUGGABLE DATABASE ALL OPEN; ALTER PLUGGABLE DATABASE ALL SAVE STATE;','The SAVE STATE command ensures PDBs auto-open on CDB restart.','For RAC: run SAVE STATE on all instances or use srvctl to manage PDB services.','Verify with: SELECT con_name, open_mode FROM v$pdbs; — should show READ WRITE.']},
+  {error:'Error: OCI Console shows "Internal Error" when creating Exadata resources',fixes:['Clear browser cache and cookies, try incognito/private browsing mode.','Check OCI service health: https://ocistatus.oraclecloud.com for region outages.','Verify your IAM user has the correct policies — need "manage database-family" at minimum.','Try using OCI CLI instead: oci db vm-cluster create ... — CLI errors are more descriptive.','If persistent: open SR with Oracle Support including the request ID from the error page (bottom-left of Console).']},
+  {error:'Error: VLANS overlapping — ExaCC network conflict',fixes:['ExaCC client and backup VLANs must use different VLAN IDs and non-overlapping CIDRs.','Check with your network team: the VLAN IDs must be unique on your physical switches.','ExaCC VLAN CIDRs must NOT overlap with the OCI VCN CIDR or any on-prem subnets.','Common mistake: using the same VLAN ID for client and backup — they must be different.','Document all VLANs in use on your switch before assigning IDs to ExaCC.']},
+];
+function renderTroubles() {
+  document.getElementById('troubleList').innerHTML = troubles.map((t,i) => `
+    <div class="trouble-item" id="trouble-${i}">
+      <div class="trouble-header" onclick="document.getElementById('trouble-${i}').classList.toggle('open')">
+        <span class="error-msg">❌ ${t.error}</span>
+        <span class="trouble-chevron">▼</span>
+      </div>
+      <div class="trouble-body">
+        ${t.fixes.map((f,j)=>`<div class="fix-step"><div class="fix-num">${j+1}</div><div>${f}</div></div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// QUIZ ENGINE
+// ═══════════════════════════════════════════
+const quizData = [
+  {q:'Which port does ADB (Autonomous Database) use for mTLS connections?',opts:['1521','1522','2484','443'],correct:1,explain:'ADB uses port 1522 for mTLS connections. Standard Oracle DB uses 1521.'},
+  {q:'ExaCC uses which network construct for internal Exadata communication?',opts:['OCI VCN Subnets','VLANs on your switches','Internet Gateway','FastConnect only'],correct:1,explain:'ExaCC uses VLANs (client + backup) on YOUR network switches — not OCI VCN subnets. ExaCS uses VCN subnets.'},
+  {q:'What is the provisioning order for ExaCS?',opts:['Infra → VM Cluster Network → VM Cluster → DB','VCN → VM Cluster → DB Home → Database','VCN → DB System → Database','Infra → AVMC → ACD → ADB'],correct:1,explain:'ExaCS: VCN/Subnets → VM Cluster (shape selection included) → DB Home → Database. No separate infrastructure step.'},
+  {q:'Can you set up Data Guard between ExaCC and ExaCS?',opts:['Yes, cross-platform DG is supported','No, ExaCC DG must be ExaCC↔ExaCC','Yes, but only with GoldenGate bridge','Yes, via DRG peering'],correct:1,explain:'ExaCC Data Guard requires both primary and standby to be on ExaCC. You cannot mix ExaCC with ExaCS.'},
+  {q:'Which Exadata cloud service does NOT require you to create a separate "Infrastructure" resource?',opts:['ExaCC','ExaCS','ADB-D','All require infrastructure'],correct:1,explain:'ExaCS allocates infrastructure automatically from Oracle\'s pool during VM Cluster creation. ExaCC and ADB-D both require explicit Infrastructure resource creation.'},
+  {q:'What is the minimum recommended subnet size for ExaCS client subnet?',opts:['/28 (14 hosts)','/26 (62 hosts)','/24 (254 hosts)','/22 (1022 hosts)'],correct:2,explain:'/24 is recommended for ExaCS client subnet to accommodate SCAN IPs, VIPs, and future scaling. /28 is the absolute minimum for ExaCC.'},
+  {q:'In DBCS provisioning, when is the initial database created?',opts:['After DB System creation, in a separate step','During DB System creation wizard (same flow)','Automatically by Oracle after 24 hours','You must use DBCA manually via SSH'],correct:1,explain:'DBCS creates the initial database as part of the DB System creation wizard — all in one step, unlike ExaCC/ExaCS where DB Home and Database are separate.'},
+  {q:'What gateway is required for database backup to Object Storage from a private subnet?',opts:['Internet Gateway','NAT Gateway','Service Gateway','DRG'],correct:2,explain:'Service Gateway provides private access to Oracle Services Network (including Object Storage) without traversing the internet.'},
+  {q:'On cloud Exadata (ExaCS/ExaCC), do you have access to cellcli?',opts:['Yes, full root access to cell servers','Yes, but read-only','No, cell servers are Oracle-managed','Only via OCI Console API'],correct:2,explain:'On ExaCS and ExaCC, storage cell servers are fully managed by Oracle. You have no cellcli or dcli access. Use OCI Console or API for storage management.'},
+  {q:'ADB-D provisioning hierarchy is:',opts:['VCN → DB System → Database','VCN → VM Cluster → DB Home → DB','Infra → Autonomous VM Cluster → ACD → ADB','VCN → ACD → ADB'],correct:2,explain:'ADB-D: Exadata Infrastructure → Autonomous VM Cluster → Autonomous Container DB (ACD) → Autonomous Database. The ACD is unique to ADB-D.'},
+  // ═══ NEW QUESTIONS ═══
+  {q:'What is the "VM Cluster Network" resource unique to?',opts:['ExaCS','ExaCC','ADB-D','DBCS'],correct:1,explain:'VM Cluster Network (defining client/backup VLANs) is unique to ExaCC because the Exadata rack sits in YOUR data center and uses YOUR physical network switches. ExaCS uses VCN subnets instead.'},
+  {q:'How many IPs does OCI reserve in every subnet?',opts:['2','3','5','8'],correct:2,explain:'OCI reserves 5 IPs in every subnet: network address, default gateway, DNS, future use, and broadcast. A /24 (256 IPs) gives 251 usable.'},
+  {q:'Which SCAN listener port is used for ONS (Fast Application Notification)?',opts:['1521','2484','6200','6100'],correct:2,explain:'Port 6200 is the ONS (Oracle Notification Service) port used for FAN events — critical for Fast Connection Failover and Load Balancing Advisory in RAC.'},
+  {q:'What is the key difference between Security Lists and NSGs in OCI?',opts:['Security Lists are stateless, NSGs are stateful','NSGs apply to VNICs (per-resource), Security Lists apply to entire subnets','They are identical in function','Security Lists support TCP only, NSGs support all protocols'],correct:1,explain:'NSGs (Network Security Groups) are attached to individual VNICs, allowing per-resource firewall rules. Security Lists apply to ALL resources in a subnet. Oracle recommends NSGs for Exadata.'},
+  {q:'For ExaCC, what must you do AFTER creating a VM Cluster Network and BEFORE creating a VM Cluster?',opts:['Download wallet','Validate the VM Cluster Network','Create a DB Home','Configure DNS'],correct:1,explain:'After creating a VM Cluster Network on ExaCC, you must click "Validate" to verify connectivity between the Exadata rack and the defined VLANs. Status must change to "Validated" before VM Cluster creation.'},
+  {q:'Which storage type does DBCS use for a single-node (non-RAC) deployment?',opts:['ASM only','LVM (Logical Volume Manager)','NFS from Object Storage','Exadata Smart Flash'],correct:1,explain:'DBCS single-node uses LVM for storage. RAC (2-node) DBCS requires ASM. This is configured during DB System creation.'},
+  {q:'What is the Autonomous Container Database (ACD) in ADB-D?',opts:['The physical Exadata rack','A hosting shell for multiple Autonomous Databases','The backup destination','The GI cluster resource'],correct:1,explain:'ACD is the "container" that hosts one or more Autonomous Databases. It sits inside the Autonomous VM Cluster and manages patching, backups, and DG at the container level.'},
+  {q:'In ExaCS, how do you connect from an on-premises network?',opts:['Internet Gateway + Public IP','NAT Gateway with port forwarding','FastConnect or IPSec VPN via DRG','Direct SSH over internet'],correct:2,explain:'ExaCS nodes are in private subnets with no public IPs. On-premises connectivity requires FastConnect (dedicated circuit) or IPSec VPN, both attached via a DRG (Dynamic Routing Gateway).'},
+  {q:'Which ExaCC provisioning step typically takes 4–8 WEEKS?',opts:['VM Cluster creation','Database creation','Physical rack delivery and activation','VM Cluster Network validation'],correct:2,explain:'After you create the ExaCC Infrastructure resource and download the config file, Oracle physically provisions and ships the Exadata rack to your DC. This takes 4–8 weeks. All other steps are minutes to hours.'},
+  {q:'What license models are available for ExaCS and ExaCC?',opts:['License Included only','BYOL only','Both BYOL and License Included','Free tier available'],correct:2,explain:'Both ExaCS and ExaCC offer BYOL (Bring Your Own License — use existing Oracle licenses) and License Included (Oracle bundles the DB license into the cloud price). BYOL is significantly cheaper if you have existing licenses.'},
+  {q:'What is the purpose of the DRG (Dynamic Routing Gateway)?',opts:['Provides internet access to public subnets','Routes traffic between VCN and on-premises/other VCNs','Manages DNS resolution for databases','Load-balances SCAN listeners'],correct:1,explain:'DRG connects your OCI VCN to on-premises networks (via FastConnect/VPN) or to other VCNs (via peering). It is mandatory for hybrid cloud architectures and critical for ExaCC control plane communication.'},
+  {q:'How does patching work differently between ExaCS and ADB-D?',opts:['Both are fully automatic','ExaCS: you schedule rolling patches. ADB-D: Oracle auto-patches','ExaCS: Oracle patches without notice. ADB-D: you schedule','Both require manual patching via opatchauto'],correct:1,explain:'ExaCS gives you control — you schedule when patches are applied (rolling, non-rolling). ADB-D is Autonomous — Oracle manages all patching automatically, including quarterly and emergency patches.'},
+  {q:'What happens to existing data when you scale OCPUs on an ExaCS VM Cluster?',opts:['Data must be backed up first, then restored','Nothing — scaling is online with no downtime','Database must be stopped and restarted','A new VM Cluster is created, data migrated'],correct:1,explain:'ExaCS OCPU scaling is fully online — no downtime, no data movement. You adjust OCPU count via Console or API and it takes effect within minutes. Storage scaling is also online.'},
+  {q:'Which ASM diskgroup stores the Fast Recovery Area on Exadata Cloud?',opts:['DATA','RECO','DBFS','FRA'],correct:1,explain:'RECO diskgroup stores the Fast Recovery Area (FRA) which includes archived redo logs, flashback logs, and RMAN backups. DATA stores the actual database files. DBFS stores diagnostics.'},
+  {q:'What is the maximum number of DB Homes you can create in a single ExaCS VM Cluster?',opts:['1','5','Multiple (limited by resources)','Unlimited'],correct:2,explain:'You can create multiple DB Homes in a single VM Cluster, each running a different Oracle version (e.g., 19c and 23ai). The limit is based on available OCPU/memory resources, not a hard count.'},
+
+  {q:'What is the RoCE protocol used in Exadata X8M and later?',opts:['Remote on-Chip Ethernet','RDMA over Converged Ethernet','Redundant OCI Cluster Engine','Rack-level OCI Communication Engine'],correct:1,explain:'RoCE (RDMA over Converged Ethernet) replaced InfiniBand starting with Exadata X8M. It provides ultra-low latency RDMA for storage cell communication over standard 100GbE Ethernet.'},
+  {q:'What is the maximum OCPU count per node on an ExaCS X9M-2 VM Cluster?',opts:['32','64','126','252'],correct:2,explain:'Each DB server on X9M-2 has 126 OCPUs available. A 2-node VM Cluster can allocate up to 126 OCPUs per node (252 total), though you can start with fewer and scale online.'},
+  {q:'What is Smart Scan in Exadata?',opts:['A network scanning tool for security','Offloading SQL WHERE clause filtering to storage cells','A backup verification feature','An automatic index creation feature'],correct:1,explain:'Smart Scan offloads SQL predicate filtering, column projection, and join processing to Exadata storage cells. This dramatically reduces data sent to DB servers — only matching rows are returned.'},
+  {q:'What is the Exadata Smart Flash Cache?',opts:['A CPU cache for SQL execution','Flash-based cache on storage cells that caches hot data','A RAM-based buffer cache extension','An SSD tier in the DB server'],correct:1,explain:'Exadata Smart Flash Cache is NVMe/PCIe flash storage on each storage cell that caches frequently accessed data. It provides sub-millisecond I/O for hot data without touching spinning disks.'},
+  {q:'What is EHCC (Exadata Hybrid Columnar Compression)?',opts:['A network compression protocol','A storage compression technique that stores data in columnar format for high compression ratios','An encryption algorithm for TDE','A backup compression method'],correct:1,explain:'EHCC stores data in a hybrid row/columnar format, achieving 10x-50x compression ratios for warehouse workloads. It is only available on Exadata storage and requires no application changes.'},
+  {q:'What is the Exadata Storage Index?',opts:['A B-tree index stored on flash','An in-memory structure on storage cells tracking min/max values per region','A full-text search index','A hash index for OLTP workloads'],correct:1,explain:'Storage Indexes are automatically maintained in-memory structures on each storage cell. They track min/max values for each 1MB storage region, allowing Smart Scan to skip entire regions that cannot satisfy a WHERE clause.'},
+  {q:'What is IORM (I/O Resource Manager) in Exadata?',opts:['A network bandwidth manager','A tool to prioritize I/O between databases and consumers on shared Exadata storage','An index optimization tool','A memory allocation manager'],correct:1,explain:'IORM manages I/O resources across multiple databases sharing Exadata storage. You can set I/O plans to prioritize critical databases, limit dev/test workloads, and ensure SLA compliance.'},
+  {q:'In ExaCC, what is the Admin VLAN used for?',opts:['Application connectivity to the database','Oracle control plane management of the Exadata rack','Database backup traffic','SCAN listener communication'],correct:1,explain:'The Admin VLAN in ExaCC connects the Exadata rack to Oracle OCI control plane. Oracle uses this to manage, monitor, and patch the infrastructure. It must have outbound HTTPS (443) access to Oracle endpoints.'},
+  {q:'What is the minimum number of storage servers in an Exadata X9M-2 quarter rack?',opts:['2','3','6','12'],correct:1,explain:'An Exadata X9M-2 quarter rack has 2 DB servers and 3 storage servers. A half rack has 4 DB + 6 storage, and a full rack has 8 DB + 12 storage servers.'},
+  {q:'What is the purpose of the Sparse Clone feature in ExaCS?',opts:['Creates a compressed backup','Creates a thin clone of a PDB that only stores changed blocks','Replicates data to standby','Creates a read-only snapshot for reporting'],correct:1,explain:'Sparse Clones (available on ExaCS) create thin PDB clones that share unchanged blocks with the source. Only modified blocks are stored separately, saving massive amounts of storage for dev/test environments.'},
+  {q:'What is the GI (Grid Infrastructure) in Exadata context?',opts:['A graphical interface for OCI Console','Oracle Clusterware + ASM that manages RAC and storage','A network gateway interface','A government compliance framework'],correct:1,explain:'Grid Infrastructure (GI) is the combination of Oracle Clusterware (manages cluster nodes, VIPs, SCAN) and Oracle ASM (manages Exadata storage diskgroups). It must be installed before the database.'},
+  {q:'What does SCAN stand for in Oracle RAC?',opts:['Storage Cell Access Node','Single Client Access Name','Secure Cluster Authentication Network','System Cluster Address Node'],correct:1,explain:'SCAN (Single Client Access Name) is a DNS name that resolves to 3 IP addresses. Clients connect to SCAN instead of individual node VIPs, enabling transparent load balancing and failover without client-side changes.'},
+  {q:'How many SCAN IPs does Oracle recommend for a RAC cluster?',opts:['1','2','3','One per node'],correct:2,explain:'Oracle recommends 3 SCAN IPs (registered in DNS) for a RAC cluster. This provides load balancing across the 3 SCAN listeners and ensures availability if one SCAN listener fails.'},
+  {q:'What is the difference between a VIP and a SCAN in RAC?',opts:['VIPs are for storage, SCAN is for compute','VIP is per-node (fails over to surviving node), SCAN is cluster-wide (3 IPs, load-balanced)','They are identical','SCAN is for ExaCS only, VIP is for ExaCC only'],correct:1,explain:'Each RAC node has a VIP that fails over to another node if the node crashes. SCAN is a cluster-wide name with 3 IPs that load-balances new connections across all nodes. Clients should always use SCAN.'},
+  {q:'What is the Maintenance Run concept in ExaCS?',opts:['A manual patching script','A scheduled OCI-managed patching window for GI and DB software','A backup verification job','A performance tuning run'],correct:1,explain:'Maintenance Runs are scheduled patching events in ExaCS. Oracle creates them automatically for quarterly patches. You can reschedule within a window. They apply patches in a rolling fashion to minimize downtime.'},
+  {q:'What is the ExaCS shape X10M known for compared to X9M?',opts:['Fewer storage servers','Higher PMEM capacity and faster NVMe flash','Lower cost only','Smaller form factor'],correct:1,explain:'X10M introduced higher Persistent Memory (PMEM) capacity and faster NVMe flash compared to X9M. PMEM provides byte-addressable persistent storage for ultra-low latency I/O, especially for redo log writes.'},
+  {q:'What is Persistent Memory (PMEM) in Exadata X8M+?',opts:['A type of RAM that loses data on power off','Byte-addressable non-volatile memory used for Smart Flash Log and Smart Flash Cache','A backup storage tier','A CPU cache level'],correct:1,explain:'PMEM (Intel Optane) is byte-addressable non-volatile memory on Exadata X8M+ storage cells. It is used for Smart Flash Log (ultra-fast redo log writes) and Smart Flash Cache, providing sub-100 microsecond latency.'},
+  {q:'What is the Smart Flash Log feature in Exadata?',opts:['A log of all Smart Scan operations','Redo log writes are mirrored to PMEM/flash for ultra-low latency commit performance','A diagnostic log stored on flash','A compressed archive log feature'],correct:1,explain:'Smart Flash Log mirrors redo log writes to PMEM/flash storage cells simultaneously with disk writes. The faster of the two completes the write, dramatically reducing commit latency for OLTP workloads.'},
+  {q:'In OCI, what is a Fault Domain?',opts:['A network failure zone','A grouping of hardware within an AD that is isolated from other groups for fault tolerance','A type of security policy','A database failure mode'],correct:1,explain:'Fault Domains are logical groupings of hardware within an Availability Domain. Resources in different Fault Domains are isolated from each other hardware failures. OCI has 3 Fault Domains per AD.'},
+  {q:'What is the OCI Vault service used for in database context?',opts:['Storing database backups','Managing TDE master encryption keys and secrets','Network traffic encryption','User password management'],correct:1,explain:'OCI Vault stores and manages TDE (Transparent Data Encryption) master keys for Exadata databases. It provides HSM-backed key management, key rotation, and audit trails for compliance.'},
+  {q:'What is TDE (Transparent Data Encryption) and where are keys stored in OCI?',opts:['Network encryption; keys in NSG','Encrypts data at rest; keys stored in OCI Vault (or auto-managed)','Encrypts backups only; keys in Object Storage','Application-level encryption; keys in DB'],correct:1,explain:'TDE encrypts database data files, redo logs, and backups at rest. In OCI, TDE master keys are stored in OCI Vault (customer-managed) or Oracle-managed key store. Encryption is transparent to applications.'},
+  {q:'What is the Resource Principal in OCI IAM?',opts:['The root user of a tenancy','An IAM identity for OCI resources (like DB instances) to call OCI APIs without user credentials','A special admin group','A billing principal'],correct:1,explain:'Resource Principals allow OCI resources (like DB instances, functions) to authenticate to OCI APIs using their own identity. This eliminates the need to store user credentials in scripts or applications.'},
+  {q:'What is a Work Request in OCI?',opts:['A support ticket','An asynchronous operation tracker for long-running OCI API calls','A scheduled maintenance request','A billing request'],correct:1,explain:'Work Requests track the progress of long-running OCI operations (like VM Cluster creation). They provide status, percentage complete, and error details. You can poll them via API or view in Console.'},
+  {q:'What is the difference between ExaCS and ExaCC from a network perspective?',opts:['ExaCS uses VLANs, ExaCC uses VCN subnets','ExaCS uses OCI VCN subnets, ExaCC uses VLANs on customer switches','Both use VCN subnets','Both use VLANs'],correct:1,explain:'ExaCS uses standard OCI VCN subnets (client + backup) — fully managed by OCI networking. ExaCC uses VLANs on YOUR physical network switches because the rack is in your data center.'},
+  {q:'What is the Private Endpoint feature for ADB-D?',opts:['A public IP for ADB access','A private IP in your VCN subnet for ADB connectivity, replacing the public endpoint','A VPN endpoint','A FastConnect endpoint'],correct:1,explain:'Private Endpoint assigns a private IP from your VCN subnet to the ADB instance. All connectivity goes through this private IP, eliminating public internet exposure. Required for secure enterprise deployments.'},
+  {q:'What is Autonomous Data Guard in ADB-D?',opts:['A manual DG setup for ADB','Oracle-managed Data Guard for ADB-D with automatic failover capability','A backup feature','A monitoring tool'],correct:1,explain:'Autonomous Data Guard for ADB-D is fully Oracle-managed. Oracle handles redo transport, standby maintenance, and can perform automatic failover. You configure it at the ACD level.'},
+  {q:'What is the ACD (Autonomous Container Database) patch model?',opts:['Manual patching only','Regular Update (quarterly) or Autonomous (Oracle auto-patches)','Annual patching only','No patching needed'],correct:1,explain:'ACD offers two patch models: Regular Update (you control when quarterly patches apply) and Autonomous (Oracle automatically applies patches). Autonomous provides the highest availability with zero-downtime patching.'},
+  {q:'What is the DGMGRL command-line tool used for?',opts:['Database backup management','Data Guard Broker command-line interface for managing DG configurations','Grid Infrastructure management','ASM diskgroup management'],correct:1,explain:'DGMGRL (Data Guard Manager command-line) is the CLI for Oracle Data Guard Broker. Used to show configuration, perform switchover/failover, check lag, and manage DG properties.'},
+  {q:'What are the three Data Guard protection modes?',opts:['Basic, Standard, Advanced','Maximum Performance, Maximum Availability, Maximum Protection','Async, Sync, Semi-sync','Bronze, Silver, Gold'],correct:1,explain:'Data Guard has three protection modes: Maximum Performance (async redo, no primary impact), Maximum Availability (sync, primary waits if standby unavailable), Maximum Protection (sync, primary shuts down if standby unavailable).'},
+  {q:'What is the difference between DG Switchover and Failover?',opts:['They are identical','Switchover is planned (both sides healthy, no data loss). Failover is unplanned (primary failed, possible data loss in async mode).','Switchover is for ExaCS, Failover is for ExaCC','Failover is planned, Switchover is unplanned'],correct:1,explain:'Switchover is a planned role reversal — both primary and standby are healthy, no data loss. Failover is an emergency operation when the primary has failed — possible data loss in Maximum Performance mode.'},
+  {q:'What is Fast Connection Failover (FCF) in Oracle RAC?',opts:['A network failover protocol','Application-level feature using ONS/FAN events to immediately redirect connections away from failed nodes','A storage failover mechanism','A Data Guard failover trigger'],correct:1,explain:'FCF uses Oracle Notification Service (ONS) to publish FAN (Fast Application Notification) events when nodes fail. JDBC/UCP clients receive these events and immediately redirect connections to surviving nodes, eliminating connection timeout waits.'},
+  {q:'What is the OSN (Oracle Services Network) CIDR used for in NSG rules?',opts:['Internet access','Accessing Oracle-managed services (Object Storage, etc.) via Service Gateway without internet','On-premises connectivity','DNS resolution'],correct:1,explain:'OSN CIDR represents Oracle managed services network. NSG egress rules to OSN CIDR (via Service Gateway) allow private subnet resources to access Object Storage, Oracle APIs, and other Oracle services without internet exposure.'},
+  {q:'What is the Cluster Network in ExaCS VM Cluster configuration?',opts:['The OCI VCN','The private interconnect network between DB nodes for RAC cache fusion and GI heartbeat','The backup network','The admin network'],correct:1,explain:'The Cluster Network (private interconnect) is the high-speed network between RAC nodes used for Cache Fusion (block transfers between node buffer caches) and GI heartbeat. On Exadata, this uses RoCE/InfiniBand.'},
+  {q:'What is Cache Fusion in Oracle RAC?',opts:['A memory caching algorithm','The mechanism by which RAC nodes share database blocks directly via the private interconnect without disk I/O','A storage cell caching feature','A CPU cache optimization'],correct:1,explain:'Cache Fusion allows RAC nodes to transfer database blocks directly between their buffer caches via the private interconnect. If node 1 needs a block held by node 2, it gets it via Cache Fusion instead of reading from disk.'},
+  {q:'What is the OCPU unit in OCI?',opts:['One physical CPU core','One vCPU (equivalent to one hyper-thread of a physical core)','One CPU socket','One NUMA node'],correct:1,explain:'OCPU (Oracle Compute Unit) = 1 physical CPU core with 2 hyper-threads (2 vCPUs). When you provision 4 OCPUs on ExaCS, you get 4 physical cores (8 vCPUs). This is different from AWS vCPU which is 1 hyper-thread.'},
+  {q:'What is the License Included model vs BYOL for ExaCS?',opts:['License Included is free, BYOL costs extra','License Included bundles Oracle DB license in the OCI price. BYOL uses your existing Oracle licenses and costs less.','They cost the same','BYOL is only for Enterprise Edition'],correct:1,explain:'License Included means Oracle DB license is included in the hourly OCI price (higher cost). BYOL (Bring Your Own License) lets you apply existing Oracle licenses, significantly reducing OCI costs. BYOL requires valid Oracle license entitlements.'},
+  {q:'What is the IAM verb hierarchy in OCI policies?',opts:['Read, Write, Execute, Admin','inspect < read < use < manage','view < modify < delete < admin','get < list < create < delete'],correct:1,explain:'OCI IAM verbs in ascending privilege: inspect (list resources) < read (get details) < use (use existing resources) < manage (full CRUD). Policies use these verbs: Allow group X to manage database-family in compartment Y.'},
+  {q:'What is the tenancy in OCI?',opts:['A single VM instance','The root-level account/organization in OCI that contains all compartments and resources','A billing unit','A region'],correct:1,explain:'A tenancy is the top-level OCI account for an organization. It contains the root compartment, all child compartments, all resources, and all IAM policies. Each tenancy has a unique OCID.'},
+  {q:'What is the OCID in OCI?',opts:['Oracle Cloud Instance Descriptor','Oracle Cloud Identifier — a unique ID for every OCI resource','Oracle Compartment ID','Oracle Cluster Instance Definition'],correct:1,explain:'OCID (Oracle Cloud Identifier) is a globally unique identifier for every OCI resource (tenancy, compartment, VCN, subnet, DB, etc.). Format: ocid1.<resource_type>.<realm>.<region>.<unique_id>. Used in API calls and CLI commands.'},
+  {q:'What is the db_unique_name parameter critical for in Data Guard?',opts:['It sets the database SID','It uniquely identifies each database in a DG configuration — primary and standby must have different db_unique_names','It sets the PDB name','It configures the SCAN listener'],correct:1,explain:'db_unique_name uniquely identifies each database in a Data Guard configuration. Primary might be PRODDB, standby PRODDB_DR. This allows DG Broker and redo transport to distinguish between the two databases.'},
+  {q:'What is the Standby Redo Log (SRL) in Data Guard?',opts:['A backup of the primary redo logs','Additional redo log groups on the standby that receive redo from the primary in real-time','A log of all DG operations','The standby archived logs'],correct:1,explain:'Standby Redo Logs (SRLs) are special redo log groups on the standby database that receive redo data from the primary in real-time (for sync/async transport). Oracle recommends one more SRL group than the primary has online redo log groups.'},
+  {q:'What is the LogXptMode in Data Guard Broker?',opts:['The log transport encryption mode','The redo transport mode: ASYNC (Maximum Performance) or SYNC (Maximum Availability/Protection)','The log compression mode','The log archival mode'],correct:1,explain:'LogXptMode controls redo transport: ASYNC means the primary does not wait for standby acknowledgment (Maximum Performance). SYNC means the primary waits for standby to write to SRL before committing (Maximum Availability/Protection).'},
+  {q:'What is FastStart Failover (FSFO) in Data Guard?',opts:['A fast backup feature','Automatic failover to standby when primary fails, managed by DG Observer process','A fast provisioning feature','A fast connection feature'],correct:1,explain:'FastStart Failover (FSFO) enables automatic failover to a pre-configured standby when the primary fails. It requires a DG Observer process (running on a third host) to monitor and trigger failover without human intervention.'},
+  {q:'What is the DG Observer process?',opts:['A monitoring dashboard','A lightweight process on a third host that monitors primary/standby and triggers FSFO if primary fails','A storage observer','A network monitoring agent'],correct:1,explain:'The DG Observer is a DGMGRL process running on a third, independent host. It continuously monitors the primary and standby. If the primary fails and the standby is healthy, Observer triggers automatic failover (FSFO).'},
+  {q:'What is the Redo Apply process on a physical standby?',opts:['A backup process','The MRP (Managed Recovery Process) that applies redo from the primary to keep the standby synchronized','A replication agent','A log archival process'],correct:1,explain:'Redo Apply uses the MRP (Managed Recovery Process) on the physical standby to continuously apply redo received from the primary. This keeps the standby synchronized. Command: ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT.'},
+  {q:'What is the Active Data Guard option?',opts:['Standard Data Guard with no extra cost','A licensed option allowing the physical standby to be open READ ONLY while applying redo (real-time query)','A feature for automatic failover','A backup-only standby'],correct:1,explain:'Active Data Guard (licensed option) allows the physical standby to be open in READ ONLY mode while simultaneously applying redo from the primary. This enables real-time reporting on the standby without impacting the primary.'},
+  {q:'What is the Exadata Storage Server Software (CELLSRV)?',opts:['The OS on DB servers','The software stack on Exadata storage cells that implements Smart Scan, Smart Flash Cache, IORM, and storage indexes','A backup agent','A monitoring daemon'],correct:1,explain:'CELLSRV is the core software on Exadata storage cells. It implements all Exadata intelligence: Smart Scan, Smart Flash Cache, Smart Flash Log, Storage Indexes, IORM, and EHCC. It communicates with DB servers via iDB protocol.'},
+  {q:'What is the iDB protocol in Exadata?',opts:['Internet Database protocol','The proprietary protocol between Exadata DB servers and storage cells for Smart Scan and I/O offloading','An index database protocol','An inter-datacenter backup protocol'],correct:1,explain:'iDB (Intelligent Database protocol) is the proprietary protocol used between Exadata DB servers and storage cells. It carries SQL predicates to storage cells for Smart Scan offloading and returns only matching data.'},
+  {q:'What is the dcli utility in Exadata?',opts:['A database CLI tool','A distributed command-line utility to run commands across all DB servers or storage cells simultaneously','A data compression tool','A diagnostic collection tool'],correct:1,explain:'dcli (Distributed Command-Line Interface) runs commands across multiple Exadata nodes simultaneously. Example: dcli -g cell_group -l root "cellcli -e list cell" runs cellcli on all storage cells at once. Not available on ExaCS/ExaCC (Oracle-managed).'},
+  {q:'What is the cellcli utility?',opts:['A cell phone CLI','The command-line interface for managing Exadata storage cells — listing disks, flash cache, IORM plans','A network cell management tool','A backup CLI'],correct:1,explain:'cellcli is the CLI for Exadata storage cell management. Used to list/manage cell disks, flash cache, IORM plans, and diagnose storage issues. Not available on ExaCS/ExaCC as cells are Oracle-managed.'},
+  {q:'What is the ASM Filter Driver (ASMFD) in Exadata?',opts:['A network filter','A kernel driver that filters I/O to ASM disks, preventing accidental overwrites and improving performance','A firewall for ASM','A compression driver'],correct:1,explain:'ASM Filter Driver (ASMFD) is a kernel module that intercepts all I/O to ASM disks. It prevents non-ASM processes from accidentally writing to ASM disks and provides a more direct I/O path, improving performance.'},
+  {q:'What is ACFS (ASM Cluster File System)?',opts:['A backup file system','A cluster-aware file system built on top of ASM, used for GI home, DBFS, and shared application files','An archive file system','A compressed file system'],correct:1,explain:'ACFS (ASM Cluster File System) is a general-purpose cluster file system built on ASM. Used for Oracle GI home, DBFS (Database File System), and shared application files across RAC nodes. Supports snapshots and replication.'},
+  {q:'What is the DBFS diskgroup in Exadata?',opts:['A backup diskgroup','An ASM diskgroup used for GI/Oracle software homes, diagnostics, and ACFS mounts','A data diskgroup','A flash cache diskgroup'],correct:1,explain:'DBFS diskgroup stores Oracle Grid Infrastructure and database software homes, diagnostic files, and ACFS mount points. It is separate from DATA (database files) and RECO (recovery files) diskgroups.'},
+  {q:'What is the Exadata Offload concept?',opts:['Moving data to a different region','Pushing SQL processing (filtering, projection, joins) from DB servers to storage cells to reduce data movement','Offloading backups to tape','Moving databases to a different Exadata'],correct:1,explain:'Exadata Offload pushes SQL processing to storage cells. Instead of reading all data to DB servers and filtering there, storage cells filter data and return only matching rows. This reduces I/O, network traffic, and CPU on DB servers.'},
+  {q:'What is the Exadata Smart Scan eligibility requirement?',opts:['Any SQL query qualifies','Full table/partition scans with direct path reads qualify. Index scans and small table scans do NOT use Smart Scan.','Only SELECT statements qualify','Only DML statements qualify'],correct:1,explain:'Smart Scan only activates for full table/partition scans using direct path reads (bypassing buffer cache). Index range scans, small table scans (cached in buffer), and DML do not use Smart Scan. Use V$SYSSTAT to verify Smart Scan usage.'},
+  {q:'What is EHCC best suited for?',opts:['OLTP tables with frequent updates','Data warehouse/archive tables with mostly read workloads and infrequent updates','Temporary tables','Index-organized tables'],correct:1,explain:'EHCC provides 10x-50x compression for data warehouse and archive tables. However, DML on EHCC-compressed rows requires decompression first, making it unsuitable for high-update OLTP tables. Best for historical/archive data.'},
+  {q:'What is the Exadata X8M key innovation over X7?',opts:['More CPU cores','Introduction of PMEM (Persistent Memory) and RoCE, replacing InfiniBand','Larger disk capacity','Lower cost'],correct:1,explain:'X8M introduced two major innovations: PMEM (Intel Optane Persistent Memory) for ultra-low latency storage, and RoCE (RDMA over Converged Ethernet) replacing InfiniBand. This enabled sub-100 microsecond storage latency.'},
+  {q:'What is the Exadata Storage Expansion Rack?',opts:['A rack with only DB servers','A rack with only storage cells (no DB servers) to add storage capacity to an existing Exadata','A backup rack','A network expansion rack'],correct:1,explain:'Exadata Storage Expansion Rack contains only storage cells (no DB servers). It is used to add storage capacity to an existing Exadata Database Machine when you need more storage but not more compute.'},
+  {q:'What is the ASM Normal Redundancy in Exadata?',opts:['No mirroring','2-way mirroring (each extent has one mirror copy) — default for DATA and RECO diskgroups','3-way mirroring','RAID-5 equivalent'],correct:1,explain:'ASM Normal Redundancy provides 2-way mirroring — each data extent has one mirror copy on a different storage cell. This is the default for DATA and RECO diskgroups on Exadata, providing protection against single storage cell failure.'},
+  {q:'What is the ASM High Redundancy in Exadata?',opts:['No mirroring','2-way mirroring','3-way mirroring — each extent has two mirror copies, tolerating 2 storage cell failures','RAID-6 equivalent'],correct:2,explain:'ASM High Redundancy provides 3-way mirroring — each extent has two mirror copies on different storage cells. This tolerates simultaneous failure of 2 storage cells. Used for critical diskgroups requiring maximum protection.'},
+  {q:'What is the Exadata Elastic Configuration?',opts:['Automatic scaling of resources','The ability to configure any combination of DB servers and storage servers (not fixed quarter/half/full rack ratios)','A flexible pricing model','An elastic IP feature'],correct:1,explain:'Exadata Elastic Configuration (available on X8M+) allows you to choose any combination of DB servers (2-8) and storage servers (3-12) independently, rather than being locked into quarter/half/full rack ratios.'},
+  {q:'What is the Exadata X10M key storage innovation?',opts:['Larger spinning disks','Higher capacity NVMe flash (up to 51.2 TB per storage server) and increased PMEM','More DB servers','Lower latency network'],correct:1,explain:'X10M features significantly higher NVMe flash capacity (up to 51.2 TB per storage server) and increased PMEM. This enables all-flash configurations for maximum performance without spinning disks.'},
+  {q:'What is the Exadata X9M DB server CPU?',opts:['Intel Xeon E5','AMD EPYC','Intel Xeon Platinum 8358 (Ice Lake) — 32 cores per socket, 2 sockets = 64 cores per DB server','ARM Neoverse'],correct:2,explain:'X9M-2 DB servers use Intel Xeon Platinum 8358 (Ice Lake) processors with 32 cores per socket. With 2 sockets per DB server, each DB server has 64 physical cores (128 OCPUs).'},
+  {q:'What is the Exadata Smart Flash Cache write policy?',opts:['Write-through only','Write-back (dirty data written to flash first, then asynchronously to disk) for maximum write performance','Write-around (bypasses flash)','Write-once'],correct:1,explain:'Exadata Smart Flash Cache uses a write-back policy — writes go to flash first (fast), then are asynchronously written to disk. This dramatically improves write performance for OLTP workloads while maintaining data durability.'},
+  {q:'What is the Exadata IORM inter-database plan?',opts:['A plan for a single database','A resource plan that allocates I/O percentages across multiple databases sharing the same Exadata storage','A network I/O plan','A CPU resource plan'],correct:1,explain:'IORM inter-database plan allocates I/O bandwidth percentages across multiple databases on shared Exadata storage. Example: PROD gets 60%, DEV gets 20%, TEST gets 20%. Configured via cellcli or OCI Console.'},
+  {q:'What is the Exadata IORM intra-database plan?',opts:['A plan across multiple databases','A resource plan within a single database that prioritizes I/O for different consumer groups (e.g., OLTP vs batch)','A network plan','A storage plan'],correct:1,explain:'IORM intra-database plan works within a single database to prioritize I/O for different Oracle Resource Manager consumer groups. OLTP sessions can get higher I/O priority than batch jobs running on the same database.'},
+  {q:'What is the Exadata X9M network bandwidth between DB servers and storage cells?',opts:['10 GbE','25 GbE','100 GbE RoCE (RDMA over Converged Ethernet)','InfiniBand 56 Gbps'],correct:2,explain:'X9M uses 100 GbE RoCE for the storage network between DB servers and storage cells. This replaced InfiniBand starting with X8M. RDMA capability provides kernel-bypass for ultra-low latency storage access.'},
+  {q:'What is the Exadata X9M client network bandwidth?',opts:['1 GbE','10 GbE','25 GbE','100 GbE'],correct:2,explain:'X9M DB servers have 25 GbE client network interfaces for connecting to the application network (VCN subnets in ExaCS, VLANs in ExaCC). This provides high bandwidth for SQL*Net client connections.'},
+  {q:'What is the Exadata Consolidation benefit?',opts:['Consolidating multiple Exadata racks into one','Running multiple databases on a single Exadata with IORM ensuring isolation and performance guarantees','Consolidating backups','Consolidating network connections'],correct:1,explain:'Exadata Consolidation allows multiple databases (dev, test, prod) to share a single Exadata infrastructure. IORM provides I/O isolation, and ASM provides storage isolation. This reduces hardware costs while maintaining performance SLAs.'},
+  {q:'What is the Exadata X9M memory per DB server?',opts:['256 GB','512 GB','1 TB','2 TB'],correct:2,explain:'Each X9M-2 DB server has 1 TB of RAM (DDR4). This large memory enables large SGA configurations, reducing physical I/O. A 2-node VM Cluster can have up to 2 TB total memory.'},
+  {q:'What is the Exadata Smart Scan statistic to monitor in V$SYSSTAT?',opts:['physical reads','cell physical IO interconnect bytes returned by smart scan','db block gets','redo size'],correct:1,explain:'"cell physical IO interconnect bytes returned by smart scan" in V$SYSSTAT shows how much data was returned by Smart Scan (after filtering). Compare with "cell physical IO interconnect bytes" to calculate Smart Scan efficiency ratio.'},
+  {q:'What is the Exadata Offload Efficiency metric?',opts:['CPU efficiency','The ratio of data filtered by storage cells vs data sent to DB servers — higher is better','Network efficiency','Memory efficiency'],correct:1,explain:'Offload Efficiency = (bytes scanned by cells - bytes returned to DB servers) / bytes scanned. High efficiency (e.g., 95%) means cells filtered 95% of data, sending only 5% to DB servers. Monitor via V$SYSSTAT or AWR.'},
+  {q:'What is the Exadata X9M NVMe flash capacity per storage server?',opts:['3.2 TB','6.4 TB','12.8 TB','25.6 TB'],correct:2,explain:'Each X9M storage server has 12.8 TB of NVMe flash (PCIe NVMe SSDs). A full rack (12 storage servers) has 153.6 TB of flash. This flash is used for Smart Flash Cache and Smart Flash Log.'},
+  {q:'What is the Exadata X9M spinning disk capacity per storage server?',opts:['8 TB','16 TB','32 TB','64 TB'],correct:2,explain:'Each X9M storage server has 32 TB of spinning disk (high-capacity HDDs). A full rack (12 storage servers) has 384 TB raw spinning disk capacity. Used for bulk data storage in the DATA and RECO diskgroups.'},
+  {q:'What is the Exadata X9M PMEM capacity per storage server?',opts:['256 GB','512 GB','1.5 TB','3 TB'],correct:2,explain:'Each X9M storage server has 1.5 TB of Intel Optane PMEM. A full rack has 18 TB of PMEM total. Used for Smart Flash Log (redo writes) and Smart Flash Cache (hot data caching) for sub-100 microsecond latency.'},
+  {q:'What is the Exadata X9M total IOPS for a full rack?',opts:['1 million IOPS','5 million IOPS','16 million IOPS','100 million IOPS'],correct:2,explain:'An Exadata X9M full rack delivers approximately 16 million IOPS (from NVMe flash). This is achieved through parallel I/O across 12 storage servers, each with multiple NVMe SSDs, using RDMA for low-latency access.'},
+  {q:'What is the Exadata X9M total throughput for a full rack?',opts:['10 GB/s','50 GB/s','154 GB/s','500 GB/s'],correct:2,explain:'An Exadata X9M full rack delivers approximately 154 GB/s of storage throughput (Smart Scan). This is achieved through parallel Smart Scan across 12 storage servers over 100 GbE RoCE network.'},
+
+];
+let quizAnswered = {};
+function renderQuiz() {
+  document.getElementById('quizContainer').innerHTML = quizData.map((q,i)=>`
+    <div class="quiz-q" id="quiz-${i}">
+      <h4><span class="q-num">Q${i+1}.</span> ${q.q}</h4>
+      <div class="quiz-opts">
+        ${q.opts.map((o,j)=>`<div class="quiz-opt" id="qopt-${i}-${j}" onclick="answerQuiz(${i},${j})"><div class="opt-marker">${String.fromCharCode(65+j)}</div><span>${o}</span></div>`).join('')}
+      </div>
+      <div class="quiz-explanation" id="qexp-${i}">${q.explain}</div>
+    </div>`).join('');
+}
+function answerQuiz(qi,oi) {
+  if(quizAnswered[qi]!==undefined) return;
+  quizAnswered[qi]=oi;
+  const correct = quizData[qi].correct;
+  document.getElementById(`qopt-${qi}-${oi}`).classList.add(oi===correct?'correct':'wrong');
+  if(oi!==correct) document.getElementById(`qopt-${qi}-${correct}`).classList.add('correct');
+  document.getElementById(`qexp-${qi}`).style.display='block';
+  // Check if all answered
+  if(Object.keys(quizAnswered).length===quizData.length) {
+    const score = Object.entries(quizAnswered).filter(([k,v])=>v===quizData[k].correct).length;
+    document.getElementById('scoreNum').textContent=score+'/'+quizData.length;
+    document.getElementById('quizScore').style.display='block';
+  }
+}
+function resetQuiz() {
+  quizAnswered={};
+  document.getElementById('quizScore').style.display='none';
+  renderQuiz();
+}
+
+// ═══════════════════════════════════════════
+// COPY CODE BLOCKS
+// ═══════════════════════════════════════════
+function copyCode(btn) {
+  const block = btn.closest('.code-block');
+  const text = block.textContent.replace('📋 Copy','').replace('✅ Copied!','').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✅ Copied!';
+    setTimeout(()=>btn.textContent='📋 Copy',1500);
+  });
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  calcCIDR();
+  // Programmatic init — no event, just render the table and set first button active
+  currentNSG = 'exacc';
+  const rules = nsgRules['exacc'];
+  let h=`<table class="tbl"><thead><tr><th>Direction</th><th>Protocol</th><th>Port</th><th>Source/Destination</th><th>Purpose</th></tr></thead><tbody>`;
+  rules.forEach(r=>{h+=`<tr><td>${r.dir}</td><td>${r.proto}</td><td class="mono" style="color:var(--accent-cyan)">${r.port}</td><td class="mono" style="font-size:11px">${r.src}</td><td style="font-size:11px;color:var(--text-secondary)">${r.purpose}</td></tr>`;});
+  h+='</tbody></table>';
+  document.getElementById('nsgOut').innerHTML=h;
+  renderChecklist(preItems,'preChecklist','preProgress','preBar');
+  renderChecklist(postItems,'postChecklist','postProgress','postBar');
+  renderTroubles();
+  renderQuiz();
+});
+</script>
+
+</body>
+</html>
