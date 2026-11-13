@@ -440,6 +440,43 @@ mark.qn-hit { background:rgba(250,204,21,.35); color:inherit; border-radius:2px;
   .dg-arrow { transform:rotate(90deg); }
 }
 
+/* ═══ MOBILE (added) ═══ */
+@media(max-width:768px) {
+  .topnav { padding:0 12px; gap:8px; }
+  .topnav .brand { flex:1; min-width:0; gap:8px; overflow:hidden; }
+  .topnav .app-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; min-width:0; }
+  .topnav .region { display:none; }
+  .topnav .controls { gap:6px; flex-shrink:0; }
+  .tab-scroll { padding:0 8px; }
+  .tab-btn { padding:11px 12px; }
+  .input-row .field { width:100%; }
+  .input-row { align-items:stretch; }
+  .sec-hdr { flex-wrap:wrap; gap:8px; }
+  .sec-hdr h2 { font-size:18px; }
+  .tbl, .cmp-table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .code-block, pre { overflow-x:auto; max-width:100%; }
+  .detail-grid { grid-template-columns:1fr 1fr; }
+  .arch-box { min-width:0 !important; }
+  .dg-box { min-width:0; width:100%; }
+  .panel img { max-width:100%; height:auto; }
+  .qn-chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+  .qn-chips::-webkit-scrollbar { display:none; }
+  .qn-chip { white-space:nowrap; flex-shrink:0; }
+  .qn-search { flex-basis:100%; min-width:0; }
+  .qn-btn { flex:1; }
+  .quiz-q { padding:14px; }
+  .quiz-q h4 { font-size:13.5px; }
+  .qn-item summary { padding:12px 14px; font-size:13px; }
+  .qn-a { padding:0 14px 12px; }
+}
+@media(max-width:480px) {
+  .main { padding:12px; }
+  .topnav .sep, .topnav .app-name { display:none; }
+  .detail-grid { grid-template-columns:1fr; }
+  .field input, .field select { min-width:0; width:100%; }
+  .quiz-score .score-num { font-size:36px; }
+}
+
 /* ═══ PRINT ═══ */
 @media print {
   .topnav,.tab-container { display:none; }
